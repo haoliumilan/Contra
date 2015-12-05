@@ -14,14 +14,15 @@ end)
 PlayDirector.SMaxRow = 7 -- 最大行数
 PlayDirector.SMaxCol = 7 -- 最大列数
 PlayDirector.SOriPosX = 15 -- 珠子矩阵最左坐标
-PlayDirector.SOriPosY = 100 
+PlayDirector.SOriPosY = 110 
 PlayDirector.SSpace = 20 -- 珠子的间隔
 PlayDirector.SSide = 80 -- 珠子的边长
 PlayDirector.DropTime = 0.2 -- 珠子掉落一个格子用的时间
 
 function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
-	self.selectStones_ = {} -- 选中的stoneView
+	self.stoneDatas_ = {} -- 7x7 stoneData
+	self.selectStones_ = {} -- 选中的stoneData
 
 	-- touchLayer 用于接收触摸事件
 	self.touchLayer = display.newLayer()
@@ -38,15 +39,19 @@ end
 
 -- 初始化7x7的珠子矩阵
 function PlayDirector:initMatrix()
+	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
-		self.stoneViews_[i] = {}
+		self.stoneDatas_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			local oneStoneData = StoneData.new({rowIndex = i, colIndex = j})
-			oneStoneData:setRandomColorType()
+			oneStone = StoneData.new({rowIndex = i, colIndex = j})
+			oneStone:setRandomColorType()
 			local posX, posY = self:getPosByRowColIndex(i, j)
-			self.stoneViews_[i][j] = app:createView("StoneView", oneStoneData)
+			self.stoneViews_[oneStone] = app:createView("StoneView", oneStone)
 				:addTo(self)
 				:pos(posX, posY)
+
+			self.stoneDatas_[i][j] = oneStone
+
 		end
 	end
 
@@ -56,13 +61,12 @@ end
 function PlayDirector:updateMatrix()
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
-	local oneStoneData
 	local tempIndex
 	local addStoneArr = {} -- 用来记录每一列新创建的珠子
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
+			oneStone = self.stoneDatas_[i][j]
 			if oneStone == nil then
 			-- 去找它上面的，离他最近的那个stone
 				tempIndex = 0
@@ -73,7 +77,7 @@ function PlayDirector:updateMatrix()
 						break
 					else
 						tempIndex = tempIndex + 1
-						oneStone = self.stoneViews_[i+tempIndex][j]
+						oneStone = self.stoneDatas_[i+tempIndex][j]
 					end
 				end
 
@@ -82,19 +86,22 @@ function PlayDirector:updateMatrix()
 					addStoneArr[j] = addStoneArr[j] or 0
 					addStoneArr[j] = addStoneArr[j] + 1
 					tempIndex = tempIndex+addStoneArr[j]
-					oneStoneData = StoneData.new({rowIndex = i, colIndex = j})
-					oneStoneData:setRandomColorType()
+
+					oneStone = StoneData.new({rowIndex = i, colIndex = j})
+					oneStone:setRandomColorType()
+					self.stoneDatas_[i][j] = oneStone
 					pos2X, pos2Y = self:getPosByRowColIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
-					self.stoneViews_[i][j] = app:createView("StoneView", oneStoneData)
+					
+					self.stoneViews_[self.stoneDatas_[i][j]] = app:createView("StoneView", self.stoneDatas_[i][j])
 						:addTo(self)
 						:pos(pos2X, pos2Y)
 				else
-					oneStone:getStoneData():setRowColIndex(i, j)
-					self.stoneViews_[i][j] = oneStone
-					self.stoneViews_[i+tempIndex][j] = nil
+					oneStone:setRowColIndex(i, j)
+					self.stoneDatas_[i][j] = oneStone
+					self.stoneDatas_[i+tempIndex][j] = nil
 				end
 
-				self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.DropTime, cc.p(pos1X, pos1Y)))
+				self.stoneViews_[self.stoneDatas_[i][j]]:runAction(cc.MoveTo:create(PlayDirector.DropTime, cc.p(pos1X, pos1Y)))
 
 			end
 		end
@@ -110,11 +117,11 @@ function PlayDirector:onTouch(event)
     -- local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
     -- print(label)
 
-    local stoneView = self:getStoneViewByPos(event.x, event.y)
-    if stoneView then
-    	local state = stoneView:getStoneData():getState()
+    local stoneData = self:getStoneByPos(event.x, event.y)
+    if stoneData then
+    	local state = stoneData:getState()
     	if state == "normal" then
-    		self:selectStoneView(stoneView)
+    		self:selectStone(stoneData)
 
     	elseif state == "highlight" then
     		if #self.selectStones_ > 2 then
@@ -136,7 +143,7 @@ function PlayDirector:onTouch(event)
 end
 
 -- 通过坐标获取Stone
-function PlayDirector:getStoneViewByPos(posX, posY)
+function PlayDirector:getStoneByPos(posX, posY)
 	local realSide = PlayDirector.SSide + PlayDirector.SSpace
 
 	if posX < PlayDirector.SOriPosX + PlayDirector.SSpace * 0.5
@@ -155,23 +162,23 @@ function PlayDirector:getStoneViewByPos(posX, posY)
 	local colIndex = (posX - PlayDirector.SOriPosX - PlayDirector.SSpace * 0.5) / realSide
 	colIndex = math.floor(colIndex) + 1
 
-	return self.stoneViews_[rowIndex][colIndex]
+	return self.stoneDatas_[rowIndex][colIndex]
 end
 
 -- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
-function PlayDirector:selectStoneView(stoneView)
-	self.selectStones_ = self:getCanLinkStones(stoneView)
+function PlayDirector:selectStone(stoneData)
+	self.selectStones_ = self:getCanLinkStones(stoneData)
 
 	for i,v in ipairs(self.selectStones_) do
-		v:getStoneData():setSelect()
+		v:setSelect()
 	end
 
 	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone:getStoneData():getState() == "normal" then
-				oneStone:getStoneData():setDisable()
+			oneStone = self.stoneDatas_[i][j]
+			if oneStone:getState() == "normal" then
+				oneStone:setDisable()
 			end
 		end
 	end
@@ -183,9 +190,9 @@ function PlayDirector:resetAllStone()
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneData():getState() ~= "normal" then
-				oneStone:getStoneData():setReady()
+			local oneStone = self.stoneDatas_[i][j]
+			if oneStone and oneStone:getState() ~= "normal" then
+				oneStone:setReady()
 			end
 		end
 	end
@@ -194,8 +201,8 @@ end
 
 -- 判断两个stone是否相邻
 function PlayDirector:getIsRelate(stone1, stone2)
-	local rowIndex1, colIndex1 = stone1:getStoneData():getRowColIndex()
-	local rowIndex2, colIndex2 = stone2:getStoneData():getRowColIndex()
+	local rowIndex1, colIndex1 = stone1:getRowColIndex()
+	local rowIndex2, colIndex2 = stone2:getRowColIndex()
 	local temp1 = rowIndex1 - rowIndex2
 	local temp2 = colIndex1 - colIndex2
 	if temp1 >= -1 and temp1 <= 1 and temp2 >= -1 and temp2 <= 1 then
@@ -209,14 +216,14 @@ end
 -- 获得一个stone所有相邻的stone
 function PlayDirector:getRelateStones(centerStone)
 	local relateStones = {}
-	local rowIndex, colIndex = centerStone:getStoneData():getRowColIndex()
+	local rowIndex, colIndex = centerStone:getRowColIndex()
 	local xValues = {-1, 0, 1, -1, 1, -1, 0, 1}
 	local yValues = {1, 1, 1, 0, 0, -1, -1, -1}
 	for i=1,8 do
 		local xIndex = colIndex + xValues[i]
 		local yIndex = rowIndex + yValues[i]
 		if xIndex >= 1 and xIndex <= PlayDirector.SMaxCol and yIndex >= 1 and yIndex <= PlayDirector.SMaxRow then
-			table.insert(relateStones, self.stoneViews_[yIndex][xIndex])
+			table.insert(relateStones, self.stoneDatas_[yIndex][xIndex])
 		end
 	end
 
@@ -231,7 +238,7 @@ function PlayDirector:getCanLinkStones(startStone)
 	local function findCanLinkStone(oneStone)
 		local relateStones = self:getRelateStones(oneStone)
 		for i,v in ipairs(relateStones) do
-			if v:getStoneData():getColorType() == oneStone:getStoneData():getColorType()
+			if v:getColorType() == oneStone:getColorType()
 				and canLinkStones[v] ~= true then
 				canLinkStones[v] = true
 				findCanLinkStone(v)
@@ -251,11 +258,11 @@ function PlayDirector:clearStone()
 	local max = #self.selectStones_
 	while max >= 1 do
 		oneStone = self.selectStones_[1]
-		local rowIndex, colIndex = oneStone:getStoneData():getRowColIndex()
-		self.stoneViews_[rowIndex][colIndex] = nil
+		local rowIndex, colIndex = oneStone:getRowColIndex()
+		self.stoneDatas_[rowIndex][colIndex] = nil
 		table.remove(self.selectStones_, 1)
-		oneStone:removeFromParent()
-		oneStone = nil
+		self.stoneViews_[oneStone]:removeFromParent()
+		self.stoneViews_[oneStone] = nil
         max = max - 1
 	end
 
