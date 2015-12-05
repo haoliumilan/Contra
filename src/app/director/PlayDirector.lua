@@ -22,13 +22,19 @@ PlayDirector.DropTime = 0.15 -- 珠子掉落一个格子用的时间
 function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
 	self.selectStones_ = {} -- 选中的stoneView
+	self.canLinkStones_ = {} -- 可以连接的stoneView
+
+	-- touchLayer 用于接收触摸事件
+	self.touchLayer = display.newLayer()
+	self:addChild(self.touchLayer)
+
+    -- 启用触摸
+	self.touchLayer:setTouchEnabled(true)	
+	-- 添加触摸事件处理函数
+	self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
 	self:initMatrix()
 
-	-- 启用触摸
-	self:setTouchEnabled(true)	
-	-- 添加触摸事件处理函数
-	self:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 end
 
 -- 初始化7x7的珠子矩阵
@@ -78,14 +84,12 @@ function PlayDirector:updateMatrix()
 					addStoneArr[j] = addStoneArr[j] + 1
 					tempIndex = tempIndex+addStoneArr[j]
 					oneStoneData = StoneData.new({rowIndex = i, colIndex = j})
-					print("new stone", i, j)
 					oneStoneData:setRandomColorType()
 					pos2X, pos2Y = self:getPosByRowColIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
 					self.stoneViews_[i][j] = app:createView("StoneView", oneStoneData)
 						:addTo(self)
 						:pos(pos2X, pos2Y)
 				else
-					print("update stone", i, j)
 					oneStone:getStoneData():setRowColIndex(i, j)
 					self.stoneViews_[i][j] = oneStone
 					self.stoneViews_[i+tempIndex][j] = nil
@@ -104,26 +108,23 @@ function PlayDirector:onTouch(event)
     -- event.name 是触摸事件的状态：began, moved, ended, cancelled
     -- event.x, event.y 是触摸点当前位置
     -- event.prevX, event.prevY 是触摸点之前的位置
-    if event.x < display.left or event.x > display.right or event.y < display.bottom or event.y > display.top then
-    -- 超出屏幕
-	    self:resetAllStone()
-    	return false
-    end
+    local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
+    print(label)
 
     local stoneView = self:getStoneViewByPos(event.x, event.y)
-    if stoneView == nil then
-    	return false
-    end
-
-    -- local label = string.format("sprite: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
-    -- print(label)
 
     if event.name == "began" then
-    	self:selectStoneView(stoneView)
+    	if stoneView then
+	    	self:selectStoneView(stoneView)
+	    else
+	    	return false
+	    end
 
     elseif event.name == "moved" then
-    	self:selectStoneView(stoneView)
-
+    	if stoneView then
+	    	self:selectStoneView(stoneView)
+	    end
+	    
     elseif event.name == "cancelled" then
     	self:resetAllStone()
 
@@ -161,7 +162,7 @@ function PlayDirector:getStoneViewByPos(posX, posY)
 
 	local colIndex = (posX - PlayDirector.SOriPosX - PlayDirector.SSpace * 0.5) / realSide
 	colIndex = math.floor(colIndex) + 1
-	print("getStoneViewByPos", rowIndex, colIndex)
+
 	return self.stoneViews_[rowIndex][colIndex]
 end
 
@@ -171,11 +172,17 @@ function PlayDirector:selectStoneView(stoneView)
 	-- 如果当前还一个没有选中，需要将不同颜色stone设置为不可选，相同颜色stone不变
 		table.insert(self.selectStones_, stoneView)
 		stoneView:getStoneData():setSelect()
+		self:checkCanLinkStones(stoneView)
+
 		for i=1,PlayDirector.SMaxRow do
 			for j=1,PlayDirector.SMaxCol do
 				local oneStone = self.stoneViews_[i][j]
 				if oneStone:getStoneData():getColorType() ~= stoneView:getStoneData():getColorType() then
 					oneStone:getStoneData():setDisable()
+				else
+					if table.indexof(self.canLinkStones_, oneStone) == false then
+						oneStone:getStoneData():setDisable()
+					end
 				end
 			end
 		end
@@ -185,7 +192,6 @@ function PlayDirector:selectStoneView(stoneView)
 		-- 颜色相同，可以选中的
 			local lastStone = self.selectStones_[#self.selectStones_]
 			local rowIndex, colIndex = lastStone:getStoneData():getRowColIndex()
-			print("lastStone", rowIndex, colIndex, self:getIsRelate(lastStone, stoneView), #self.selectStones_)
 			if self:getIsRelate(lastStone, stoneView) == true then
 			-- 两个stone是相邻的
 				table.insert(self.selectStones_, stoneView)
@@ -207,12 +213,12 @@ end
 -- 重置所有stone
 function PlayDirector:resetAllStone()
 	self.selectStones_ = {}
+	self.canLinkStones_ = {}
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
 			if oneStone and oneStone:getStoneData():getState() ~= "normal" then
-				-- print("resetAllStone", i, j)
 				oneStone:getStoneData():setReady()
 			end
 		end
@@ -232,6 +238,44 @@ function PlayDirector:getIsRelate(stone1, stone2)
 		return false
 	end
 
+end
+
+-- 获得一个stone所有相邻的stone
+function PlayDirector:getRelateStones(centerStone)
+	local relateStones = {}
+	local rowIndex, colIndex = centerStone:getStoneData():getRowColIndex()
+	local xValues = {-1, 0, 1, -1, 1, -1, 0, 1}
+	local yValues = {1, 1, 1, 0, 0, -1, -1, -1}
+	for i=1,8 do
+		local xIndex = colIndex + xValues[i]
+		local yIndex = rowIndex + yValues[i]
+		if xIndex >= 1 and xIndex <= PlayDirector.SMaxCol and yIndex >= 1 and yIndex <= PlayDirector.SMaxRow then
+			table.insert(relateStones, self.stoneViews_[yIndex][xIndex])
+		end
+	end
+
+	return relateStones
+end
+
+-- 获取一个stone可以连接的所有stone,
+function PlayDirector:checkCanLinkStones(startStone)
+	local canLinkStones = {}
+	canLinkStones[startStone] = true
+
+	local function findCanLinkStone(oneStone)
+		local relateStones = self:getRelateStones(oneStone)
+		for i,v in ipairs(relateStones) do
+			if v:getStoneData():getColorType() == oneStone:getStoneData():getColorType()
+				and canLinkStones[v] ~= true then
+				canLinkStones[v] = true
+				findCanLinkStone(v)
+			end
+		end
+	end
+
+	findCanLinkStone(startStone)
+
+	self.canLinkStones_ = table.keys(canLinkStones)
 end
 
 -- 消除选中的珠子

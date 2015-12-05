@@ -10,7 +10,6 @@ local StoneData = class("StoneData", cc.mvc.ModelBase)
 -- 定义属性
 StoneData.schema = clone(cc.mvc.ModelBase.schema)
 StoneData.schema["colorType"] = {"number", 1} -- 珠子颜色类型
-StoneData.schema["relateStones"] = {"table", {}} -- 相邻的珠子，8个方向
 StoneData.schema["rowIndex"] = {"number", 1} -- 排列的行序数
 StoneData.schema["colIndex"] = {"number", 1} -- 排列的行序数
 
@@ -73,7 +72,6 @@ function StoneData:getColorType()
 end
 
 function StoneData:setRowColIndex(rowIndex, colIndex)
-	print("StoneData:setRowColIndex", rowIndex, colIndex)
 	self.rowIndex_ = rowIndex
 	self.colIndex_ = colIndex
 	self:dispatchEvent({name = StoneData.INDEX_EVENT})

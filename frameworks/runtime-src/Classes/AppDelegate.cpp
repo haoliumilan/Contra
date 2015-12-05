@@ -74,7 +74,7 @@ bool AppDelegate::applicationDidFinishLaunching()
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();    
     if(!glview) {
-        string title = "forger";
+        string title = "Contra";
         glview = cocos2d::GLViewImpl::create(title.c_str());
         director->setOpenGLView(glview);
         director->startAnimation();

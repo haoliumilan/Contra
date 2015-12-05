@@ -17,7 +17,8 @@ function PlayLevelScene:ctor()
 		:addTo(self)
 		:pos(display.cx, display.cy)
 
-    self:addChild(PlayDirector.new())
+    self.playDirector = PlayDirector.new()
+	    :addTo(self)
 
 end
 

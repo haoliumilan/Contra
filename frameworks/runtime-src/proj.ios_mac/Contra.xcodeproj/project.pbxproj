@@ -284,7 +284,7 @@
 		5023811517EBBCAC00990C9B /* Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
 		5023811617EBBCAC00990C9B /* RootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RootViewController.h; sourceTree = "<group>"; };
 		5023811717EBBCAC00990C9B /* RootViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RootViewController.mm; sourceTree = "<group>"; };
-		5023816B17EBBCE400990C9B /* forger Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "forger Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5023816B17EBBCE400990C9B /* Contra iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Contra iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5023817217EBBE3400990C9B /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
 		5023817317EBBE3400990C9B /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5023817517EBBE3400990C9B /* Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
@@ -488,7 +488,7 @@
 		C03781B818BF655400FE4F13 /* src */ = {isa = PBXFileReference; lastKnownFileType = folder; name = src; path = ../../../src; sourceTree = "<group>"; };
 		C07828F418B4D72E00BD2287 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		D6B061341803AC000077942B /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.0.sdk/System/Library/Frameworks/CoreMotion.framework; sourceTree = DEVELOPER_DIR; };
-		F293B3C815EB7BE500256477 /* forger iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "forger iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F293B3C815EB7BE500256477 /* Contra iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Contra iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F293B3CC15EB7BE500256477 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		F293B3CE15EB7BE500256477 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		F293B3D015EB7BE500256477 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
@@ -1067,8 +1067,8 @@
 		F293B3C915EB7BE500256477 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F293B3C815EB7BE500256477 /* forger iOS.app */,
-				5023816B17EBBCE400990C9B /* forger Mac.app */,
+				F293B3C815EB7BE500256477 /* Contra iOS.app */,
+				5023816B17EBBCE400990C9B /* Contra iOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1128,9 +1128,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5023812617EBBCE400990C9B /* forger Mac */ = {
+		5023812617EBBCE400990C9B /* Contra Mac */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5023816817EBBCE400990C9B /* Build configuration list for PBXNativeTarget "forger Mac" */;
+			buildConfigurationList = 5023816817EBBCE400990C9B /* Build configuration list for PBXNativeTarget "Contra Mac" */;
 			buildPhases = (
 				5023813117EBBCE400990C9B /* Sources */,
 				5023813617EBBCE400990C9B /* Frameworks */,
@@ -1142,14 +1142,14 @@
 				152A34B9199CE758004B68DC /* PBXTargetDependency */,
 				C0A2F04118975FF80072A7AB /* PBXTargetDependency */,
 			);
-			name = "forger Mac";
+			name = "Contra Mac";
 			productName = forger;
-			productReference = 5023816B17EBBCE400990C9B /* forger Mac.app */;
+			productReference = 5023816B17EBBCE400990C9B /* Contra iOS.app */;
 			productType = "com.apple.product-type.application";
 		};
-		F293B3C715EB7BE500256477 /* forger iOS */ = {
+		F293B3C715EB7BE500256477 /* Contra iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F293B6C415EB7BEA00256477 /* Build configuration list for PBXNativeTarget "forger iOS" */;
+			buildConfigurationList = F293B6C415EB7BEA00256477 /* Build configuration list for PBXNativeTarget "Contra iOS" */;
 			buildPhases = (
 				F293B3C415EB7BE500256477 /* Sources */,
 				F293B3C515EB7BE500256477 /* Frameworks */,
@@ -1162,9 +1162,9 @@
 				152A349F199CE72E004B68DC /* PBXTargetDependency */,
 				15D1F3091994BBCA00302043 /* PBXTargetDependency */,
 			);
-			name = "forger iOS";
+			name = "Contra iOS";
 			productName = forger;
-			productReference = F293B3C815EB7BE500256477 /* forger iOS.app */;
+			productReference = F293B3C815EB7BE500256477 /* Contra iOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1175,7 +1175,7 @@
 			attributes = {
 				LastUpgradeCheck = 0710;
 			};
-			buildConfigurationList = F293B3C215EB7BE500256477 /* Build configuration list for PBXProject "forger" */;
+			buildConfigurationList = F293B3C215EB7BE500256477 /* Build configuration list for PBXProject "Contra" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -1197,8 +1197,8 @@
 			);
 			projectRoot = "";
 			targets = (
-				F293B3C715EB7BE500256477 /* forger iOS */,
-				5023812617EBBCE400990C9B /* forger Mac */,
+				F293B3C715EB7BE500256477 /* Contra iOS */,
+				5023812617EBBCE400990C9B /* Contra Mac */,
 			);
 		};
 /* End PBXProject section */
@@ -1493,6 +1493,7 @@
 					"-pagezero_size",
 					10000,
 				);
+				PRODUCT_NAME = "Contra iOS";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos\" \"$(QUICK_V3_ROOT)/cocos\" \"$(QUICK_V3_ROOT)/cocos/base\" \"$(QUICK_V3_ROOT)/cocos/physics\" \"$(QUICK_V3_ROOT)/cocos/math/kazmath\" \"$(QUICK_V3_ROOT)/cocos/2d\" \"$(QUICK_V3_ROOT)/cocos/ui\" \"$(QUICK_V3_ROOT)/cocos/network\" \"$(QUICK_V3_ROOT)/cocos/audio/include\" \"$(QUICK_V3_ROOT)/cocos/editor-support\" \"$(QUICK_V3_ROOT)/extensions\" \"$(QUICK_V3_ROOT)/external\" \"$(QUICK_V3_ROOT)/external/chipmunk/include/chipmunk\" \"$(QUICK_V3_ROOT)/external/lua/luajit/include\" \"$(QUICK_V3_ROOT)/external/lua/tolua\" \"$(QUICK_V3_ROOT)/external/glfw3/include/mac\" \"$(QUICK_V3_ROOT)/external/lua/luajit/include\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/manual\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/auto\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/manual\" \"$(QUICK_V3_ROOT)/quick/lib/quick-src\" \"$(QUICK_V3_ROOT)/quick/lib/quick-src/extra\" \"$(QUICK_V3_ROOT)/external/protobuf-lite/src\"";
 			};
@@ -1521,6 +1522,7 @@
 					"-pagezero_size",
 					10000,
 				);
+				PRODUCT_NAME = "Contra iOS";
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos\" \"$(QUICK_V3_ROOT)/cocos\" \"$(QUICK_V3_ROOT)/cocos/base\" \"$(QUICK_V3_ROOT)/cocos/physics\" \"$(QUICK_V3_ROOT)/cocos/math/kazmath\" \"$(QUICK_V3_ROOT)/cocos/2d\" \"$(QUICK_V3_ROOT)/cocos/ui\" \"$(QUICK_V3_ROOT)/cocos/network\" \"$(QUICK_V3_ROOT)/cocos/audio/include\" \"$(QUICK_V3_ROOT)/cocos/editor-support\" \"$(QUICK_V3_ROOT)/extensions\" \"$(QUICK_V3_ROOT)/external\" \"$(QUICK_V3_ROOT)/external/chipmunk/include/chipmunk\" \"$(QUICK_V3_ROOT)/external/lua/luajit/include\" \"$(QUICK_V3_ROOT)/external/lua/tolua\" \"$(QUICK_V3_ROOT)/external/glfw3/include/mac\" \"$(QUICK_V3_ROOT)/external/lua/luajit/include\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/manual\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/auto\" \"$(QUICK_V3_ROOT)/cocos/scripting/lua-bindings/manual\" \"$(QUICK_V3_ROOT)/quick/lib/quick-src\" \"$(QUICK_V3_ROOT)/quick/lib/quick-src/extra\" \"$(QUICK_V3_ROOT)/external/protobuf-lite/src\"";
 			};
@@ -1678,6 +1680,7 @@
 					"-image_base",
 					100000000,
 				);
+				PRODUCT_NAME = "Contra iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos/platform/ios\" \"$(QUICK_V3_ROOT)/external/curl/include/ios\"";
@@ -1733,6 +1736,7 @@
 					"-image_base",
 					100000000,
 				);
+				PRODUCT_NAME = "Contra iOS";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos/platform/ios\" \"$(QUICK_V3_ROOT)/external/curl/include/ios\"";
@@ -1743,7 +1747,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5023816817EBBCE400990C9B /* Build configuration list for PBXNativeTarget "forger Mac" */ = {
+		5023816817EBBCE400990C9B /* Build configuration list for PBXNativeTarget "Contra Mac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5023816917EBBCE400990C9B /* Debug */,
@@ -1752,7 +1756,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F293B3C215EB7BE500256477 /* Build configuration list for PBXProject "forger" */ = {
+		F293B3C215EB7BE500256477 /* Build configuration list for PBXProject "Contra" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F293B6C215EB7BEA00256477 /* Debug */,
@@ -1761,7 +1765,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F293B6C415EB7BEA00256477 /* Build configuration list for PBXNativeTarget "forger iOS" */ = {
+		F293B6C415EB7BEA00256477 /* Build configuration list for PBXNativeTarget "Contra iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F293B6C515EB7BEA00256477 /* Debug */,

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5023812617EBBCE400990C9B"
-               BuildableName = "forger Mac.app"
-               BlueprintName = "forger Mac"
-               ReferencedContainer = "container:forger.xcodeproj">
+               BuildableName = "Contra iOS.app"
+               BlueprintName = "Contra Mac"
+               ReferencedContainer = "container:Contra.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5023812617EBBCE400990C9B"
-            BuildableName = "forger Mac.app"
-            BlueprintName = "forger Mac"
-            ReferencedContainer = "container:forger.xcodeproj">
+            BuildableName = "Contra iOS.app"
+            BlueprintName = "Contra Mac"
+            ReferencedContainer = "container:Contra.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5023812617EBBCE400990C9B"
-            BuildableName = "forger Mac.app"
-            BlueprintName = "forger Mac"
-            ReferencedContainer = "container:forger.xcodeproj">
+            BuildableName = "Contra iOS.app"
+            BlueprintName = "Contra Mac"
+            ReferencedContainer = "container:Contra.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -75,9 +75,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5023812617EBBCE400990C9B"
-            BuildableName = "forger Mac.app"
-            BlueprintName = "forger Mac"
-            ReferencedContainer = "container:forger.xcodeproj">
+            BuildableName = "Contra iOS.app"
+            BlueprintName = "Contra Mac"
+            ReferencedContainer = "container:Contra.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
