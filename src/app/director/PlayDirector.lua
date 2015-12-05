@@ -17,12 +17,11 @@ PlayDirector.SOriPosX = 15 -- 珠子矩阵最左坐标
 PlayDirector.SOriPosY = 100 
 PlayDirector.SSpace = 20 -- 珠子的间隔
 PlayDirector.SSide = 80 -- 珠子的边长
-PlayDirector.DropTime = 0.15 -- 珠子掉落一个格子用的时间
+PlayDirector.DropTime = 0.2 -- 珠子掉落一个格子用的时间
 
 function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
 	self.selectStones_ = {} -- 选中的stoneView
-	self.canLinkStones_ = {} -- 可以连接的stoneView
 
 	-- touchLayer 用于接收触摸事件
 	self.touchLayer = display.newLayer()
@@ -108,39 +107,32 @@ function PlayDirector:onTouch(event)
     -- event.name 是触摸事件的状态：began, moved, ended, cancelled
     -- event.x, event.y 是触摸点当前位置
     -- event.prevX, event.prevY 是触摸点之前的位置
-    local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
-    print(label)
+    -- local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
+    -- print(label)
 
     local stoneView = self:getStoneViewByPos(event.x, event.y)
+    if stoneView then
+    	local state = stoneView:getStoneData():getState()
+    	if state == "normal" then
+    		self:selectStoneView(stoneView)
 
-    if event.name == "began" then
-    	if stoneView then
-	    	self:selectStoneView(stoneView)
-	    else
-	    	return false
-	    end
-
-    elseif event.name == "moved" then
-    	if stoneView then
-	    	self:selectStoneView(stoneView)
-	    end
-	    
-    elseif event.name == "cancelled" then
-    	self:resetAllStone()
-
-    else
-    	if #self.selectStones_ > 2 then
-    	-- 选中的stone超过三个，消除
-    		self:clearStone()
+    	elseif state == "highlight" then
+    		if #self.selectStones_ > 2 then
+	    		-- 消除
+	    		self:clearStone()
+	    	else
+	    		-- 取消选中
+	    		self:resetAllStone()
+	    	end
     	else
-    	-- 重置，所有stone恢复为normal
+    		-- 取消选中
     		self:resetAllStone()
-    	end
 
+    	end
     end
 
     -- 返回 true 表示要响应该触摸事件，并继续接收该触摸事件的状态变化
-    return true
+    return false
 end
 
 -- 通过坐标获取Stone
@@ -166,54 +158,28 @@ function PlayDirector:getStoneViewByPos(posX, posY)
 	return self.stoneViews_[rowIndex][colIndex]
 end
 
--- 选中一个StoneView
+-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 function PlayDirector:selectStoneView(stoneView)
-	if #self.selectStones_ == 0 then
-	-- 如果当前还一个没有选中，需要将不同颜色stone设置为不可选，相同颜色stone不变
-		table.insert(self.selectStones_, stoneView)
-		stoneView:getStoneData():setSelect()
-		self:checkCanLinkStones(stoneView)
+	self.selectStones_ = self:getCanLinkStones(stoneView)
 
-		for i=1,PlayDirector.SMaxRow do
-			for j=1,PlayDirector.SMaxCol do
-				local oneStone = self.stoneViews_[i][j]
-				if oneStone:getStoneData():getColorType() ~= stoneView:getStoneData():getColorType() then
-					oneStone:getStoneData():setDisable()
-				else
-					if table.indexof(self.canLinkStones_, oneStone) == false then
-						oneStone:getStoneData():setDisable()
-					end
-				end
-			end
-		end
-
-	else
-		if stoneView:getStoneData():getState() == "normal" then
-		-- 颜色相同，可以选中的
-			local lastStone = self.selectStones_[#self.selectStones_]
-			local rowIndex, colIndex = lastStone:getStoneData():getRowColIndex()
-			if self:getIsRelate(lastStone, stoneView) == true then
-			-- 两个stone是相邻的
-				table.insert(self.selectStones_, stoneView)
-				stoneView:getStoneData():setSelect()
-			end
-		else
-			if #self.selectStones_ > 1 and self.selectStones_[#self.selectStones_-1] == stoneView then
-			-- 退回到倒数第二个选中的，那就取消最后一个选中的
-				local lastStone = table.remove(self.selectStones_, #self.selectStones_)
-				lastStone:getStoneData():setReady()
-			end
-
-		end
-
+	for i,v in ipairs(self.selectStones_) do
+		v:getStoneData():setSelect()
 	end
 
+	local oneStone = nil
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone:getStoneData():getState() == "normal" then
+				oneStone:getStoneData():setDisable()
+			end
+		end
+	end
 end
 
 -- 重置所有stone
 function PlayDirector:resetAllStone()
 	self.selectStones_ = {}
-	self.canLinkStones_ = {}
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -258,7 +224,7 @@ function PlayDirector:getRelateStones(centerStone)
 end
 
 -- 获取一个stone可以连接的所有stone,
-function PlayDirector:checkCanLinkStones(startStone)
+function PlayDirector:getCanLinkStones(startStone)
 	local canLinkStones = {}
 	canLinkStones[startStone] = true
 
@@ -275,7 +241,7 @@ function PlayDirector:checkCanLinkStones(startStone)
 
 	findCanLinkStone(startStone)
 
-	self.canLinkStones_ = table.keys(canLinkStones)
+	return table.keys(canLinkStones)
 end
 
 -- 消除选中的珠子
