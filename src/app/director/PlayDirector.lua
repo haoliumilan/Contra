@@ -30,6 +30,7 @@ function PlayDirector:ctor()
 	self.skillDatas_ = {} 	-- 技能
 	self.skillViews_ = {} -- skillView
 	self.selectSkill_ = nil -- 选中的技能
+	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 
 	self:setStateMachine()
 
@@ -118,6 +119,9 @@ function PlayDirector:onSelectStone_(event)
 
 	for i,v in ipairs(self.selectStones_) do
 		v:setStoneState(enStoneState.Highlight)
+		if v:getSkillData() ~= nil then
+			self:showSkillEffect(v)
+		end
 	end
 
 	local oneStone = nil
@@ -152,8 +156,8 @@ function PlayDirector:onResetStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal and oneStone:getStoneState() ~= enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Normal)
+			if oneStone then
+				oneStone:setStoneState(enStoneState.Normal, true)
 			end
 		end
 	end
@@ -175,11 +179,10 @@ function PlayDirector:onSelectSkill_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			oneStone:setSkillEffect(false)
 			if oneStone:getColorType() ~= self.selectSkill_:getColorType() then
-				oneStone:setStoneState(enStoneState.Disable)
+				oneStone:setStoneState(enStoneState.Disable, true)
 			else
-				oneStone:setStoneState(enStoneState.Highlight)
+				oneStone:setStoneState(enStoneState.Highlight, true)
 			end
 		end
 	end
@@ -187,11 +190,10 @@ function PlayDirector:onSelectSkill_(event)
 end
 
 function PlayDirector:onResetSkill_(event)
-	if event.args[1] ~= true and self.selectStones_[1] then
-		self.selectStones_[1]:setSkillData(nil)
+	if event.args[1] ~= true and self.curSkillStone_ then
+		self.curSkillStone_:setSkillData(nil)
 	end
-
-	self.selectStones_ = {}
+	self.curSkillStone_ = nil
 
 	if self.selectSkill_ then
 		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
@@ -201,17 +203,16 @@ function PlayDirector:onResetSkill_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			oneStone:setSkillEffect(false)
 			if oneStone:getStoneState() ~= enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Normal)
+				oneStone:setStoneState(enStoneState.Normal, true)
 			end
 		end
 	end
 end
 
 function PlayDirector:onUseSkill_(event)
-	if self.selectStones_[1] then
-		self.selectStones_[1]:setSkillData(nil)
+	if self.curSkillStone_ then
+		self.curSkillStone_:setSkillData(nil)
 	end
 
 	for i=1,PlayDirector.SMaxRow do
@@ -223,7 +224,7 @@ function PlayDirector:onUseSkill_(event)
 
 	local selectStone = event.args[1]
 	selectStone:setSkillData(self.selectSkill_)
-	self.selectStones_[1] = selectStone
+	self.curSkillStone_ = selectStone
 	self:showSkillEffect(selectStone)
 
 end
@@ -307,7 +308,7 @@ function PlayDirector:onTouch(event)
     		self.fsm__:doEvent("selectStone", oneStone)
 
     	elseif state == "stoneSelect" then
-    		if #self.selectStones_ > 2 then
+    		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 2 then
 	    		-- 消除
 	    		self.fsm__:doEvent("clearStone")
 	    	else
@@ -358,14 +359,17 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect(oneStone)
-	local direction = self.selectSkill_:getDirection()
-	local effect = self.selectSkill_:getEffect()
+	local skillData = oneStone:getSkillData()
+	local direction = skillData:getDirection()
+	local effect = skillData:getEffect()
 	local rowIndex, colIndex = oneStone:getRowColIndex()
 	local directionValue
 	for i,v in ipairs(direction) do
 		directionValue = DirectionValueArr[v]
 		self:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 	end
+
+	return stoneArr
 end
 
 function PlayDirector:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
@@ -374,9 +378,14 @@ function PlayDirector:showOneDirectionEffect(directionValue, rowIndex, colIndex,
 		newRowIndex = rowIndex + directionValue[2]*j
 		newColIndex = colIndex + directionValue[1]*j
 		if self:getIsInMatrix(newRowIndex, newColIndex) == true then
-			self.stoneViews_[newRowIndex][newColIndex]:setSkillEffect(true)
+			local oneStone = self.stoneViews_[newRowIndex][newColIndex]
+			oneStone:setSkillEffect(true)
+			if table.indexof(self.selectStones_, oneStone) == false then
+				table.insert(self.selectStones_, oneStone)
+			end
 		end
 	end
+
 end
 
 -- 通过坐标获取Stone

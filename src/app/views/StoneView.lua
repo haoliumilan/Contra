@@ -28,6 +28,7 @@ function StoneView:ctor(property)
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
+    self.isSkillEffect_ = false
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.skillEffectSp_ = nil
@@ -42,8 +43,11 @@ end
 
 ---- property
 
-function StoneView:setStoneState(stoneState)
+function StoneView:setStoneState(stoneState, isClearSkillEffect)
     self.stoneState_ = stoneState
+    if isClearSkillEffect == true then
+        self.isSkillEffect_ = false
+    end
     self:updateSprite_()
 end
 
@@ -79,17 +83,8 @@ function StoneView:getSkillData()
 end
 
 function StoneView:setSkillEffect(isSkillEffect)
-    if isSkillEffect == true then
-        local size = self.sprite_:getContentSize()
-        self.skillEffectSp_ = display.newSprite(StoneView.Img_Skill_XuKuang)
-            :addTo(self.sprite_)
-            :pos(size.width/2.0, size.height/2.0)
-    else
-        if self.skillEffectSp_ then
-            self.skillEffectSp_:removeFromParent()
-            self.skillEffectSp_ = nil
-        end
-    end
+    self.isSkillEffect_ = isSkillEffect
+    self:updateSprite_()
 end
 
 ----
@@ -123,6 +118,14 @@ function StoneView:updateSprite_()
             :rotation(self.skillData_:getIconAngle())
             :pos(size.width*0.5, size.height*0.5)
     end
+
+    if self.isSkillEffect_ == true then
+        local size = self.sprite_:getContentSize()
+        display.newSprite(StoneView.Img_Skill_XuKuang)
+            :addTo(self.sprite_)
+            :pos(size.width/2.0, size.height/2.0)
+    end
+
 end
 
 return StoneView

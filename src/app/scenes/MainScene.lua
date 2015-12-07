@@ -37,6 +37,7 @@ function MainScene:ctor()
 end
 
 function MainScene:test()
+
 end
 
 function MainScene:onEnter()
