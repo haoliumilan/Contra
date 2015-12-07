@@ -4,6 +4,8 @@
 -- 
 
 local StoneView = import("app.views.StoneView")
+local SkillView = import("app.views.SkillView")
+local SkillData = import("app.data.SkillData")
 
 local PlayDirector = class("PlayDirector", function()
 	return display.newNode()
@@ -17,10 +19,17 @@ PlayDirector.SOriPosY = 110
 PlayDirector.SSpace = 20 -- 珠子的间隔
 PlayDirector.SSide = 80 -- 珠子的边长
 PlayDirector.DropTime = 0.2 -- 珠子掉落一个格子用的时间
+PlayDirector.SkOriPosX = 0 -- 技能最左坐标
+PlayDirector.SkOriPosY = 975 
+PlayDirector.SkSpace = 25 -- 技能之间的间距
+PlayDirector.SkSide = 120 -- 技能的边长
 
 function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
 	self.selectStones_ = {} -- 选中的stoneView
+	self.skillDatas_ = {} 	-- 技能
+	self.skillViews_ = {} -- skillView
+	self.selectSkill_ = nil -- 选中的技能
 
 	self:setStateMachine()
 
@@ -33,6 +42,7 @@ function PlayDirector:ctor()
 	-- 添加触摸事件处理函数
 	self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
+	self:initSkill()
 end
 
 -- state machine
@@ -54,9 +64,11 @@ function PlayDirector:setStateMachine()
 	    -- 重置stone
 	    {name = "resetStone", from = {"stoneSelect", "stoneClear", "skillUse", "skillSelect"}, to = "normal" },
 	    -- 选中skill
-	    {name = "selectSkill", from = "normal", to = "skillSelect" },	    
+	    {name = "selectSkill", from = {"normal", "skillSelect", "skillUse"}, to = "skillSelect" },
+	    -- 重置技能
+	    {name = "resetSkill", from = {"skillSelect", "skillUse"}, to = "normal" },    	    	    
 	    -- 确认技能
-	    {name = "useSkill", from = "skillSelect", to = "skillUse" }	    	    
+	    {name = "useSkill", from = {"skillSelect", "skillUse"}, to = "skillUse" },    	    
 	}
 
 	-- 设定状态机的默认回调
@@ -67,7 +79,8 @@ function PlayDirector:setStateMachine()
 	    onclearStone = handler(self, self.onClearStone_),
 	    onresetStone = handler(self, self.onResetStone_),
 	    onselectSkill = handler(self, self.onSelectSkill_),
-	    onuseSkill = handler(self, self.onUseSkill_)
+	    onuseSkill = handler(self, self.onUseSkill_),
+	    onresetSkill = handler(self, self.onResetSkill_)
 	}
 
 	self.fsm__:setupState({
@@ -86,10 +99,11 @@ end
 function PlayDirector:onStart_(event)
 	-- 初始化，随机7x7珠子
 	local oneStone = nil
+	local posX, posY
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			local posX, posY = self:getPosByRowColIndex(i, j)
+			posX, posY = self:getPosByRowColIndex(i, j)
 			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneColor = self:getRandomStoneColor()})
 				:addTo(self)
 				:pos(posX, posY)
@@ -138,7 +152,7 @@ function PlayDirector:onResetStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
+			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal and oneStone:getStoneState() ~= enStoneState.Normal then
 				oneStone:setStoneState(enStoneState.Normal)
 			end
 		end
@@ -151,11 +165,79 @@ function PlayDirector:onResetStone_(event)
 end
 
 function PlayDirector:onSelectSkill_(event)
+	if self.selectSkill_ then
+		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
+	end
+
+	self.selectSkill_ = event.args[1]
+	self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.Using)
+
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			local oneStone = self.stoneViews_[i][j]
+			oneStone:setSkillEffect(false)
+			if oneStone:getColorType() ~= self.selectSkill_:getColorType() then
+				oneStone:setStoneState(enStoneState.Disable)
+			else
+				oneStone:setStoneState(enStoneState.Highlight)
+			end
+		end
+	end
 
 end
 
-function PlayDirector:onUseSkill_(event)
+function PlayDirector:onResetSkill_(event)
+	if event.args[1] ~= true and self.selectStones_[1] then
+		self.selectStones_[1]:setSkillData(nil)
+	end
 
+	self.selectStones_ = {}
+
+	if self.selectSkill_ then
+		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
+		self.selectSkill_ = nil
+	end
+
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			local oneStone = self.stoneViews_[i][j]
+			oneStone:setSkillEffect(false)
+			if oneStone:getStoneState() ~= enStoneState.Normal then
+				oneStone:setStoneState(enStoneState.Normal)
+			end
+		end
+	end
+end
+
+function PlayDirector:onUseSkill_(event)
+	if self.selectStones_[1] then
+		self.selectStones_[1]:setSkillData(nil)
+	end
+
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			local oneStone = self.stoneViews_[i][j]
+			oneStone:setSkillEffect(false)
+		end
+	end
+
+	local selectStone = event.args[1]
+	selectStone:setSkillData(self.selectSkill_)
+	self.selectStones_[1] = selectStone
+	self:showSkillEffect(selectStone)
+
+end
+
+-- 技能按钮
+function PlayDirector:initSkill()
+	local posX
+	for i=1,5 do
+		self.skillDatas_[i] = SkillData.new(i)
+		posX = PlayDirector.SkOriPosX + PlayDirector.SkSpace * i + PlayDirector.SkSide * (i - 0.5)
+		self.skillViews_[self.skillDatas_[i]] = app:createView("SkillView", {skillData = self.skillDatas_[i]})
+			:addTo(self)
+			:pos(posX, PlayDirector.SkOriPosY)
+	end
 end
 
 -- 消除后，更新7x7矩阵
@@ -216,8 +298,11 @@ function PlayDirector:onTouch(event)
     -- print(label)
 
     local oneStone = self:getStoneByPos(event.x, event.y)
+    local oneSkill = self:getSkillByPos(event.x, event.y)
+    local state = self.fsm__:getState()
     if oneStone then
-    	local state = self.fsm__:getState()
+    	-- 选中了stone
+    	local stoneState = oneStone:getStoneState()
     	if state == "normal" then
     		self.fsm__:doEvent("selectStone", oneStone)
 
@@ -229,6 +314,37 @@ function PlayDirector:onTouch(event)
 	    		-- 取消选中
 	    		self.fsm__:doEvent("resetStone")
 	    	end
+	    elseif state == "skillSelect" then
+	    	-- 使用技能
+	    	if stoneState == enStoneState.Highlight then
+	    		self.fsm__:doEvent("useSkill", oneStone)
+	    	else
+	    		self.fsm__:doEvent("resetSkill", false)
+	    	end
+	    elseif state == "skillUse" then
+		   	-- 已经显示技能效果了
+		   	if stoneState == enStoneState.Highlight then
+		   		if oneStone:getSkillData() ~= nil then
+		   			self.fsm__:doEvent("resetSkill", true)
+		   		else
+		   			self.fsm__:doEvent("useSkill", oneStone)
+		   		end
+		   	else
+		   		self.fsm__:doEvent("resetSkill", false)
+		   	end
+
+    	else
+    		-- 取消选中
+	    	self.fsm__:doEvent("resetStone")
+
+    	end
+
+    elseif oneSkill then
+    	-- 选中了skill
+    	if state == "normal" or state == "skillSelect" or state == "skillUse" then
+    		if oneSkill ~= self.selectSkill_ and oneSkill:getCurCount() >= oneSkill:getNeedCount() then
+	    		self.fsm__:doEvent("selectSkill", oneSkill)
+	    	end
     	else
     		-- 取消选中
 	    	self.fsm__:doEvent("resetStone")
@@ -238,6 +354,29 @@ function PlayDirector:onTouch(event)
 
     -- 返回 true 表示要响应该触摸事件，并继续接收该触摸事件的状态变化
     return false
+end
+
+-- 显示技能效果
+function PlayDirector:showSkillEffect(oneStone)
+	local direction = self.selectSkill_:getDirection()
+	local effect = self.selectSkill_:getEffect()
+	local rowIndex, colIndex = oneStone:getRowColIndex()
+	local directionValue
+	for i,v in ipairs(direction) do
+		directionValue = DirectionValueArr[v]
+		self:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+	end
+end
+
+function PlayDirector:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+	local newRowIndex, newColIndex
+	for j=1,effect do
+		newRowIndex = rowIndex + directionValue[2]*j
+		newColIndex = colIndex + directionValue[1]*j
+		if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+			self.stoneViews_[newRowIndex][newColIndex]:setSkillEffect(true)
+		end
+	end
 end
 
 -- 通过坐标获取Stone
@@ -263,6 +402,26 @@ function PlayDirector:getStoneByPos(posX, posY)
 	return self.stoneViews_[rowIndex][colIndex]
 end
 
+-- 通过坐标获取Skill
+function PlayDirector:getSkillByPos(posX, posY)
+	local realSide = PlayDirector.SkSide + PlayDirector.SkSpace
+
+	if posX < PlayDirector.SkOriPosX + PlayDirector.SkSpace * 0.5
+		or posX > PlayDirector.SkOriPosX + PlayDirector.SkSpace * 0.5 + realSide * 5 then
+		return nil
+	end
+
+	if posY < PlayDirector.SkOriPosY - PlayDirector.SkSide * 0.5
+		or posY > PlayDirector.SkOriPosY + PlayDirector.SkSide * 0.5 then
+		return nil
+	end
+
+	local index = (posX - PlayDirector.SkOriPosX - PlayDirector.SkSpace * 0.5) / realSide
+	index = math.floor(index) + 1
+
+	return self.skillDatas_[index]
+end
+
 -- 判断两个stone是否相邻
 function PlayDirector:getIsRelate(stone1, stone2)
 	local rowIndex1, colIndex1 = stone1:getRowColIndex()
@@ -277,15 +436,22 @@ function PlayDirector:getIsRelate(stone1, stone2)
 
 end
 
+-- 判断一组坐标是否在matrix中
+function PlayDirector:getIsInMatrix(rowIndex, colIndex)
+	if rowIndex >= 1 and rowIndex <= PlayDirector.SMaxRow and colIndex >= 1 and colIndex <= PlayDirector.SMaxCol then
+		return true
+	else
+		return false
+	end
+end
+
 -- 获得一个stone所有相邻的stone
 function PlayDirector:getRelateStones(centerStone)
 	local relateStones = {}
 	local rowIndex, colIndex = centerStone:getRowColIndex()
-	local xValues = {-1, 0, 1, -1, 1, -1, 0, 1}
-	local yValues = {1, 1, 1, 0, 0, -1, -1, -1}
-	for i=1,8 do
-		local xIndex = colIndex + xValues[i]
-		local yIndex = rowIndex + yValues[i]
+	for i=1,#DirectionValueArr do
+		local xIndex = colIndex + DirectionValueArr[i][1]
+		local yIndex = rowIndex + DirectionValueArr[i][2]
 		if xIndex >= 1 and xIndex <= PlayDirector.SMaxCol and yIndex >= 1 and yIndex <= PlayDirector.SMaxRow then
 			table.insert(relateStones, self.stoneViews_[yIndex][xIndex])
 		end
@@ -300,12 +466,16 @@ function PlayDirector:getCanLinkStones(startStone)
 	canLinkStones[startStone] = true
 
 	local function findCanLinkStone(oneStone)
-		local relateStones = self:getRelateStones(oneStone)
-		for i,v in ipairs(relateStones) do
-			if v:getColorType() == oneStone:getColorType()
-				and canLinkStones[v] ~= true then
-				canLinkStones[v] = true
-				findCanLinkStone(v)
+		local rowIndex, colIndex = oneStone:getRowColIndex()
+		for i=1,#DirectionValueArr do
+			local newRowIndex = rowIndex + DirectionValueArr[i][2]
+			local newColIndex = colIndex + DirectionValueArr[i][1]
+			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
+			 	if relateStone:getColorType() == oneStone:getColorType() and canLinkStones[relateStone] ~= true then
+					canLinkStones[relateStone] = true
+					findCanLinkStone(relateStone)
+				end
 			end
 		end
 	end
@@ -324,7 +494,7 @@ end
 
 -- 获得一个随机颜色
 function PlayDirector:getRandomStoneColor()
-	return math.random(enStoneColor.Red, enStoneColor.Purple)
+	return math.random(enColorType.Red, enColorType.Purple)
 end
 
 

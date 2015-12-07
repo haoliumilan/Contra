@@ -6,4 +6,6 @@
 ImageName = {
 	Button01 = "Button01.png",
 	Button02 = "Button02.png",
+
+	SkillIcon = "skill/skill_%d.png",
 }
