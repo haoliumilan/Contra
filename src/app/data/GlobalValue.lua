@@ -4,17 +4,6 @@
 -- 游戏中使用的全局变量
 
 
--- 颜色类型
-enStoneColor = {
-	"Red",
-	"Yellow",
-	"Blue",
-	"Green",
-	"Purple",
-    "Max"
-}
-enStoneColor = EnumTable(enStoneColor, 0)
-
 -- 珠子关联方向类型
 enDirectionType = {
     "lt",   -- 左上

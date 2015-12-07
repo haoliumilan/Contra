@@ -11,6 +11,17 @@ enStoneState = {
 }
 enStoneState = EnumTable(enStoneState, 0)
 
+-- 颜色类型
+enStoneColor = {
+    "Red",
+    "Yellow",
+    "Blue",
+    "Green",
+    "Purple",
+    "Max"
+}
+enStoneColor = EnumTable(enStoneColor, 0)
+
 local StoneView = class("StoneView", function()
     return display.newNode()
 end)

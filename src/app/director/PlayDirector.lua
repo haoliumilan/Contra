@@ -22,6 +22,8 @@ function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
 	self.selectStones_ = {} -- 选中的stoneView
 
+	self:setStateMachine()
+
 	-- touchLayer 用于接收触摸事件
 	self.touchLayer = display.newLayer()
 	self:addChild(self.touchLayer)
@@ -31,12 +33,58 @@ function PlayDirector:ctor()
 	-- 添加触摸事件处理函数
 	self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
-	self:initMatrix()
+end
+
+-- state machine
+-- 设置状态机
+function PlayDirector:setStateMachine()
+	-- 因为PlayDirector在不同状态，所以这里为 PlayDirector 绑定了状态机组件
+	cc(self):addComponent("components.behavior.StateMachine")
+	-- 由于状态机仅供内部使用，所以不应该调用组件的 exportMethods() 方法，改为用内部属性保存状态机组件对象
+	self.fsm__ = self:getComponent("components.behavior.StateMachine")
+
+	-- 设定状态机的默认事件
+	local defaultEvents = {
+	    -- 初始化
+	    {name = "start", from = "none", to = "normal" },
+	    -- 选中stone
+	    {name = "selectStone", from = "normal", to = "stoneSelect" },
+	    -- 消除stone
+	    {name = "clearStone", from = "stoneSelect", to = "stoneClear" },
+	    -- 重置stone
+	    {name = "resetStone", from = {"stoneSelect", "stoneClear", "skillUse", "skillSelect"}, to = "normal" },
+	    -- 选中skill
+	    {name = "selectSkill", from = "normal", to = "skillSelect" },	    
+	    -- 确认技能
+	    {name = "useSkill", from = "skillSelect", to = "skillUse" }	    	    
+	}
+
+	-- 设定状态机的默认回调
+	local defaultCallbacks = {
+	    onchangestate = handler(self, self.onChangeState_),
+	    onstart = handler(self, self.onStart_),
+	    onselectStone = handler(self, self.onSelectStone_),
+	    onclearStone = handler(self, self.onClearStone_),
+	    onresetStone = handler(self, self.onResetStone_),
+	    onselectSkill = handler(self, self.onSelectSkill_),
+	    onuseSkill = handler(self, self.onUseSkill_)
+	}
+
+	self.fsm__:setupState({
+	    events = defaultEvents,
+	    callbacks = defaultCallbacks
+	})
+
+	self.fsm__:doEvent("start")
+end
+
+function PlayDirector:onChangeState_(event)
+	printf("PlayDirector state change from %s to %s", event.from, event.to)
 
 end
 
--- 初始化7x7的珠子矩阵
-function PlayDirector:initMatrix()
+function PlayDirector:onStart_(event)
+	-- 初始化，随机7x7珠子
 	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
@@ -47,6 +95,66 @@ function PlayDirector:initMatrix()
 				:pos(posX, posY)
 		end
 	end
+end
+
+function PlayDirector:onSelectStone_(event)
+	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
+	local selectStone = event.args[1]
+	self.selectStones_ = self:getCanLinkStones(selectStone)
+
+	for i,v in ipairs(self.selectStones_) do
+		v:setStoneState(enStoneState.Highlight)
+	end
+
+	local oneStone = nil
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone:getStoneState() == enStoneState.Normal then
+				oneStone:setStoneState(enStoneState.Disable)
+			end
+		end
+	end
+
+end
+
+function PlayDirector:onClearStone_(event)
+	-- 消除选中的珠子
+	local oneStone
+	local rowIndex, colIndex
+	for i,v in ipairs(self.selectStones_) do
+		rowIndex, colIndex = v:getRowColIndex()
+		self.stoneViews_[rowIndex][colIndex] = nil
+		v:removeFromParent()
+	end
+
+	self.fsm__:doEvent("resetStone", true)
+end
+
+function PlayDirector:onResetStone_(event)
+	-- 重置所有stone
+	self.selectStones_ = {}
+
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			local oneStone = self.stoneViews_[i][j]
+			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
+				oneStone:setStoneState(enStoneState.Normal)
+			end
+		end
+	end
+
+	-- 如果消除了，就要更新Matrix
+	if event.args[1] then
+		self:updateMatrix()
+	end
+end
+
+function PlayDirector:onSelectSkill_(event)
+
+end
+
+function PlayDirector:onUseSkill_(event)
 
 end
 
@@ -109,21 +217,21 @@ function PlayDirector:onTouch(event)
 
     local oneStone = self:getStoneByPos(event.x, event.y)
     if oneStone then
-    	local state = oneStone:getStoneState()
-    	if state == enStoneState.Normal then
-    		self:selectStone(oneStone)
+    	local state = self.fsm__:getState()
+    	if state == "normal" then
+    		self.fsm__:doEvent("selectStone", oneStone)
 
-    	elseif state == enStoneState.Highlight then
+    	elseif state == "stoneSelect" then
     		if #self.selectStones_ > 2 then
 	    		-- 消除
-	    		self:clearStone()
+	    		self.fsm__:doEvent("clearStone")
 	    	else
 	    		-- 取消选中
-	    		self:resetAllStone()
+	    		self.fsm__:doEvent("resetStone")
 	    	end
     	else
     		-- 取消选中
-    		self:resetAllStone()
+	    	self.fsm__:doEvent("resetStone")
 
     	end
     end
@@ -153,40 +261,6 @@ function PlayDirector:getStoneByPos(posX, posY)
 	colIndex = math.floor(colIndex) + 1
 
 	return self.stoneViews_[rowIndex][colIndex]
-end
-
--- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
-function PlayDirector:selectStone(selectStone)
-	self.selectStones_ = self:getCanLinkStones(selectStone)
-
-	for i,v in ipairs(self.selectStones_) do
-		v:setStoneState(enStoneState.Highlight)
-	end
-
-	local oneStone = nil
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone:getStoneState() == enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Disable)
-			end
-		end
-	end
-end
-
--- 重置所有stone
-function PlayDirector:resetAllStone()
-	self.selectStones_ = {}
-
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Normal)
-			end
-		end
-	end
-
 end
 
 -- 判断两个stone是否相邻
@@ -239,24 +313,6 @@ function PlayDirector:getCanLinkStones(startStone)
 	findCanLinkStone(startStone)
 
 	return table.keys(canLinkStones)
-end
-
--- 消除选中的珠子
-function PlayDirector:clearStone()
-	local oneStone
-	local rowIndex, colIndex
-	local max = #self.selectStones_
-	while max >= 1 do
-		oneStone = self.selectStones_[1]
-		local rowIndex, colIndex = oneStone:getRowColIndex()
-		table.remove(self.selectStones_, 1)
-		oneStone:removeFromParent()
-		self.stoneViews_[rowIndex][colIndex] = nil
-        max = max - 1
-	end
-
-	self:resetAllStone()
-	self:updateMatrix()
 end
 
 -- 获取矩阵的一个珠子的坐标
