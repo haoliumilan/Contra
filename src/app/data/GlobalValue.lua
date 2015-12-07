@@ -5,7 +5,7 @@
 
 
 -- 颜色类型
-enColorType = {
+enStoneColor = {
 	"Red",
 	"Yellow",
 	"Blue",
@@ -13,7 +13,7 @@ enColorType = {
 	"Purple",
     "Max"
 }
-enColorType = CreateEnumTable(enColorType, 0)
+enStoneColor = EnumTable(enStoneColor, 0)
 
 -- 珠子关联方向类型
 enDirectionType = {
@@ -27,4 +27,4 @@ enDirectionType = {
     "rb",   -- 右下
     "Max"
 }
-enDirectionType = CreateEnumTable(enDirectionType, 0)
+enDirectionType = EnumTable(enDirectionType, 0)

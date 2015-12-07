@@ -3,7 +3,13 @@
 -- Date: 2015-12-03 18:28:24
 -- 珠子的视图
 
-local StoneData = import("app.data.StoneData")
+--  状态类型
+enStoneState = {
+    "Normal",
+    "Highlight",
+    "Disable"
+}
+enStoneState = EnumTable(enStoneState, 0)
 
 local StoneView = class("StoneView", function()
     return display.newNode()
@@ -12,65 +18,72 @@ end)
 StoneView.Img_Stone_Norml = "stone/stone_n_%d.png"
 StoneView.Img_Stone_Hightlight = "stone/stone_h_%d.png"
 
-function StoneView:ctor(stoneData)
-	self.stoneData_ = stoneData
-    local cls = self.stoneData_
-    -- 通过代理注册事件的好处：可以方便的在视图删除时，清理所以通过该代理注册的事件，
-    -- 同时不影响目标对象上注册的其他事件
-    --
-    -- EventProxy.new() 第一个参数是要注册事件的对象，第二个参数是绑定的视图
-    -- 如果指定了第二个参数，那么在视图删除时，会自动清理注册的事件
-    cc.EventProxy.new(self.stoneData_, self)
-        :addEventListener(cls.CHANGE_STATE_EVENT, handler(self, self.onStateChange_))
-        :addEventListener(cls.DISABLE_EVENT, handler(self, self.onDisable_))
-        :addEventListener(cls.INDEX_EVENT, handler(self, self.onIndex_))
+function StoneView:ctor(property)
+    self.stoneState_ = property.stoneState or enStoneState.Normal
+    self.stoneColor_ = property.stoneColor or enStoneColor.Red 
+    self.rowIndex_ = property.rowIndex or 1
+    self.colIndex_ = property.colIndex or 1
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
 	    :align(display.CENTER)
 	    :addTo(self)
-	local x, y = self.stoneData_:getRowColIndex()
-	self.label_:setString(string.format("%d, %d", x, y))
+
+	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
 
     self:updateSprite_()
 end
 
-----
+---- property
 
-function StoneView:getStoneData()
-	return self.stoneData_
-end
-
-----
-
-function StoneView:onStateChange_(event)
+function StoneView:setStoneState(stoneState)
+    self.stoneState_ = stoneState
     self:updateSprite_()
 end
 
-function StoneView:onDisable_(event)
-	local filters = filter.newFilter("BRIGHTNESS", {0.5})
-	self.sprite_:setFilter(filters)
+function StoneView:getStoneState()
+    return self.stoneState_
 end
 
-function StoneView:onIndex_(event)
-	local x, y = self.stoneData_:getRowColIndex()
-	self.label_:setString(string.format("%d, %d", x, y))
+function StoneView:setStoneColor(stoneColor)
+    self.stoneColor_ = stoneColor
 end
+
+function StoneView:getColorType()
+    return self.stoneColor_
+end
+
+function StoneView:setRowColIndex(rowIndex, colIndex)
+    self.rowIndex_ = rowIndex
+    self.colIndex_ = colIndex
+    self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
+end
+
+function StoneView:getRowColIndex()
+    return self.rowIndex_, self.colIndex_
+end
+
+----
 
 function StoneView:updateSprite_()
     local texFile = nil
-    local state = self.stoneData_:getState()
-    if state == "normal" then
-        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneData_:getColorType())
-    elseif state == "highlight" then
-        texFile = string.format(StoneView.Img_Stone_Hightlight, self.stoneData_:getColorType())
-    elseif state == "gray" then
-        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneData_:getColorType())
+    if self.stoneState_ == enStoneState.Normal then
+        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneColor_)
+    elseif self.stoneState_ == enStoneState.Highlight then
+        texFile = string.format(StoneView.Img_Stone_Hightlight, self.stoneColor_)
+    elseif self.stoneState_ == enStoneState.Disable then
+        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneColor_)
     end
 
     if not texFile then return end
     self.sprite_:setTexture(texFile)
-   	self.sprite_:clearFilter()
+
+    if self.stoneState_ == enStoneState.Disable then
+        local filters = filter.newFilter("BRIGHTNESS", {0.5})
+        self.sprite_:setFilter(filters)
+    else
+        self.sprite_:clearFilter()
+    end
 end
 
 return StoneView

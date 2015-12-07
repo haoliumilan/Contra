@@ -4,7 +4,6 @@
 -- 
 
 local StoneView = import("app.views.StoneView")
-local StoneData = import("app.data.StoneData")
 
 local PlayDirector = class("PlayDirector", function()
 	return display.newNode()
@@ -21,8 +20,7 @@ PlayDirector.DropTime = 0.2 -- 珠子掉落一个格子用的时间
 
 function PlayDirector:ctor()
 	self.stoneViews_ = {} -- 7x7 stoneView
-	self.stoneDatas_ = {} -- 7x7 stoneData
-	self.selectStones_ = {} -- 选中的stoneData
+	self.selectStones_ = {} -- 选中的stoneView
 
 	-- touchLayer 用于接收触摸事件
 	self.touchLayer = display.newLayer()
@@ -41,17 +39,12 @@ end
 function PlayDirector:initMatrix()
 	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
-		self.stoneDatas_[i] = {}
+		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			oneStone = StoneData.new({rowIndex = i, colIndex = j})
-			oneStone:setRandomColorType()
 			local posX, posY = self:getPosByRowColIndex(i, j)
-			self.stoneViews_[oneStone] = app:createView("StoneView", oneStone)
+			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneColor = self:getRandomStoneColor()})
 				:addTo(self)
 				:pos(posX, posY)
-
-			self.stoneDatas_[i][j] = oneStone
-
 		end
 	end
 
@@ -66,7 +59,7 @@ function PlayDirector:updateMatrix()
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneDatas_[i][j]
+			oneStone = self.stoneViews_[i][j]
 			if oneStone == nil then
 			-- 去找它上面的，离他最近的那个stone
 				tempIndex = 0
@@ -77,7 +70,7 @@ function PlayDirector:updateMatrix()
 						break
 					else
 						tempIndex = tempIndex + 1
-						oneStone = self.stoneDatas_[i+tempIndex][j]
+						oneStone = self.stoneViews_[i+tempIndex][j]
 					end
 				end
 
@@ -87,21 +80,18 @@ function PlayDirector:updateMatrix()
 					addStoneArr[j] = addStoneArr[j] + 1
 					tempIndex = tempIndex+addStoneArr[j]
 
-					oneStone = StoneData.new({rowIndex = i, colIndex = j})
-					oneStone:setRandomColorType()
-					self.stoneDatas_[i][j] = oneStone
 					pos2X, pos2Y = self:getPosByRowColIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
 					
-					self.stoneViews_[self.stoneDatas_[i][j]] = app:createView("StoneView", self.stoneDatas_[i][j])
+					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneColor = self:getRandomStoneColor()})
 						:addTo(self)
 						:pos(pos2X, pos2Y)
 				else
 					oneStone:setRowColIndex(i, j)
-					self.stoneDatas_[i][j] = oneStone
-					self.stoneDatas_[i+tempIndex][j] = nil
+					self.stoneViews_[i][j] = oneStone
+					self.stoneViews_[i+tempIndex][j] = nil
 				end
 
-				self.stoneViews_[self.stoneDatas_[i][j]]:runAction(cc.MoveTo:create(PlayDirector.DropTime, cc.p(pos1X, pos1Y)))
+				self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.DropTime, cc.p(pos1X, pos1Y)))
 
 			end
 		end
@@ -117,13 +107,13 @@ function PlayDirector:onTouch(event)
     -- local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
     -- print(label)
 
-    local stoneData = self:getStoneByPos(event.x, event.y)
-    if stoneData then
-    	local state = stoneData:getState()
-    	if state == "normal" then
-    		self:selectStone(stoneData)
+    local oneStone = self:getStoneByPos(event.x, event.y)
+    if oneStone then
+    	local state = oneStone:getStoneState()
+    	if state == enStoneState.Normal then
+    		self:selectStone(oneStone)
 
-    	elseif state == "highlight" then
+    	elseif state == enStoneState.Highlight then
     		if #self.selectStones_ > 2 then
 	    		-- 消除
 	    		self:clearStone()
@@ -162,23 +152,23 @@ function PlayDirector:getStoneByPos(posX, posY)
 	local colIndex = (posX - PlayDirector.SOriPosX - PlayDirector.SSpace * 0.5) / realSide
 	colIndex = math.floor(colIndex) + 1
 
-	return self.stoneDatas_[rowIndex][colIndex]
+	return self.stoneViews_[rowIndex][colIndex]
 end
 
 -- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
-function PlayDirector:selectStone(stoneData)
-	self.selectStones_ = self:getCanLinkStones(stoneData)
+function PlayDirector:selectStone(selectStone)
+	self.selectStones_ = self:getCanLinkStones(selectStone)
 
 	for i,v in ipairs(self.selectStones_) do
-		v:setSelect()
+		v:setStoneState(enStoneState.Highlight)
 	end
 
 	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneDatas_[i][j]
-			if oneStone:getState() == "normal" then
-				oneStone:setDisable()
+			oneStone = self.stoneViews_[i][j]
+			if oneStone:getStoneState() == enStoneState.Normal then
+				oneStone:setStoneState(enStoneState.Disable)
 			end
 		end
 	end
@@ -190,9 +180,9 @@ function PlayDirector:resetAllStone()
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneDatas_[i][j]
-			if oneStone and oneStone:getState() ~= "normal" then
-				oneStone:setReady()
+			local oneStone = self.stoneViews_[i][j]
+			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
+				oneStone:setStoneState(enStoneState.Normal)
 			end
 		end
 	end
@@ -223,7 +213,7 @@ function PlayDirector:getRelateStones(centerStone)
 		local xIndex = colIndex + xValues[i]
 		local yIndex = rowIndex + yValues[i]
 		if xIndex >= 1 and xIndex <= PlayDirector.SMaxCol and yIndex >= 1 and yIndex <= PlayDirector.SMaxRow then
-			table.insert(relateStones, self.stoneDatas_[yIndex][xIndex])
+			table.insert(relateStones, self.stoneViews_[yIndex][xIndex])
 		end
 	end
 
@@ -259,10 +249,9 @@ function PlayDirector:clearStone()
 	while max >= 1 do
 		oneStone = self.selectStones_[1]
 		local rowIndex, colIndex = oneStone:getRowColIndex()
-		self.stoneDatas_[rowIndex][colIndex] = nil
 		table.remove(self.selectStones_, 1)
-		self.stoneViews_[oneStone]:removeFromParent()
-		self.stoneViews_[oneStone] = nil
+		oneStone:removeFromParent()
+		self.stoneViews_[rowIndex][colIndex] = nil
         max = max - 1
 	end
 
@@ -276,5 +265,11 @@ function PlayDirector:getPosByRowColIndex(rowIndex, colIndex)
 	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 0.5)
 	return posX, posY
 end
+
+-- 获得一个随机颜色
+function PlayDirector:getRandomStoneColor()
+	return math.random(enStoneColor.Red, enStoneColor.Purple)
+end
+
 
 return PlayDirector
