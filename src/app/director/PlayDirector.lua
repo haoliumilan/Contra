@@ -31,6 +31,7 @@ function PlayDirector:ctor()
 	self.skillViews_ = {} -- skillView
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
+	self.skillEffectStones_ = {} -- 技能消除的stone
 
 	self:setStateMachine()
 
@@ -116,6 +117,7 @@ function PlayDirector:onSelectStone_(event)
 	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 	local selectStone = event.args[1]
 	self.selectStones_ = self:getCanLinkStones(selectStone)
+	self.skillEffectStones_ = {}
 
 	for i,v in ipairs(self.selectStones_) do
 		v:setStoneState(enStoneState.Highlight)
@@ -144,6 +146,17 @@ function PlayDirector:onClearStone_(event)
 		rowIndex, colIndex = v:getRowColIndex()
 		self.stoneViews_[rowIndex][colIndex] = nil
 		v:removeFromParent()
+		v = nil
+	end
+
+	-- 消除技能消除的珠子
+	for i,v in ipairs(self.skillEffectStones_) do
+		if v then
+			rowIndex, colIndex = v:getRowColIndex()
+			self.stoneViews_[rowIndex][colIndex] = nil
+			v:removeFromParent()
+			v = nil
+		end
 	end
 
 	self.fsm__:doEvent("resetStone", true)
@@ -152,6 +165,7 @@ end
 function PlayDirector:onResetStone_(event)
 	-- 重置所有stone
 	self.selectStones_ = {}
+	self.skillEffectStones_ = {}
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -194,6 +208,7 @@ function PlayDirector:onResetSkill_(event)
 		self.curSkillStone_:setSkillData(nil)
 	end
 	self.curSkillStone_ = nil
+	self.skillEffectStones_ = {}
 
 	if self.selectSkill_ then
 		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
@@ -225,6 +240,7 @@ function PlayDirector:onUseSkill_(event)
 	local selectStone = event.args[1]
 	selectStone:setSkillData(self.selectSkill_)
 	self.curSkillStone_ = selectStone
+	self.skillEffectStones_ = {}
 	self:showSkillEffect(selectStone)
 
 end
@@ -359,6 +375,22 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect(oneStone)
+	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+		local newRowIndex, newColIndex
+		for j=1,effect do
+			newRowIndex = rowIndex + directionValue[2]*j
+			newColIndex = colIndex + directionValue[1]*j
+			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+				local oneStone = self.stoneViews_[newRowIndex][newColIndex]
+				oneStone:setSkillEffect(true)
+				if table.indexof(self.skillEffectStones_, oneStone) == false then
+					table.insert(self.skillEffectStones_, oneStone)
+				end
+			end
+		end
+
+	end
+
 	local skillData = oneStone:getSkillData()
 	local direction = skillData:getDirection()
 	local effect = skillData:getEffect()
@@ -366,26 +398,10 @@ function PlayDirector:showSkillEffect(oneStone)
 	local directionValue
 	for i,v in ipairs(direction) do
 		directionValue = DirectionValueArr[v]
-		self:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+		showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 	end
 
 	return stoneArr
-end
-
-function PlayDirector:showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
-	local newRowIndex, newColIndex
-	for j=1,effect do
-		newRowIndex = rowIndex + directionValue[2]*j
-		newColIndex = colIndex + directionValue[1]*j
-		if self:getIsInMatrix(newRowIndex, newColIndex) == true then
-			local oneStone = self.stoneViews_[newRowIndex][newColIndex]
-			oneStone:setSkillEffect(true)
-			if table.indexof(self.selectStones_, oneStone) == false then
-				table.insert(self.selectStones_, oneStone)
-			end
-		end
-	end
-
 end
 
 -- 通过坐标获取Stone

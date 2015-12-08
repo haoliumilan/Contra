@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "441186D4E133B090A8E4BBE499DBC9AF55C9F03C",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "63BACE0DC6FBE8346BC156834D2027AB40C82E69" : 0,
+    "441186D4E133B090A8E4BBE499DBC9AF55C9F03C" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "4DE2AC6A-113F-4CA1-B061-65D86AA6C6CD",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "63BACE0DC6FBE8346BC156834D2027AB40C82E69" : "Quick-Cocos2dx-Community\/",
+    "441186D4E133B090A8E4BBE499DBC9AF55C9F03C" : "forger\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Contra",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "frameworks\/runtime-src\/proj.ios_mac\/Contra.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/haoliumilan\/Contra.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "441186D4E133B090A8E4BBE499DBC9AF55C9F03C"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/iTyran\/Quick-Cocos2dx-Community.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "63BACE0DC6FBE8346BC156834D2027AB40C82E69"
+    }
+  ]
+}
