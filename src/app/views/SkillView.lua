@@ -22,8 +22,21 @@ function SkillView:ctor(property)
 	self.skillState_ = property.skillState or enSkillState.CanNotUse
 	self.skillData_ = property.skillData
 
+    -- 通过代理注册事件的好处：可以方便的在视图删除时，清理所以通过该代理注册的事件，
+    -- 同时不影响目标对象上注册的其他事件
+    -- EventProxy.new() 第一个参数是要注册事件的对象，第二个参数是绑定的视图
+    -- 如果指定了第二个参数，那么在视图删除时，会自动清理注册的事件
+    cc.EventProxy.new(self.skillData_, self)
+        :addEventListener(self.skillData_.CHANGE_CURCOUNT_EVENT, handler(self, self.updateSkillCount_))
+
 	self.sprite_ = display.newFilteredSprite():addTo(self)
 		:scale(1.2)
+
+    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
+        :align(display.CENTER)
+        :addTo(self)
+
+    self:updateSkillCount_()
 
 	self:updateSprite_()
 end
@@ -35,6 +48,18 @@ end
 function SkillView:setSkillState(skillState)
 	self.skillState_ = skillState
 	self:updateSprite_()
+end
+
+function SkillView:updateSkillCount_()
+    local needCount = self.skillData_:getNeedCount()
+    local curCount = self.skillData_:getCurCount()
+
+    self.label_:setString(string.format("%d/%d", curCount, needCount))
+    if curCount < needCount then
+        self:setSkillState(enSkillState.CanNotUse)
+    else
+        self:setSkillState(enSkillState.CanUse)
+    end
 end
 
 function SkillView:updateSprite_()
@@ -52,7 +77,7 @@ function SkillView:updateSprite_()
     if not texFile then return end
     self.sprite_:setTexture(texFile)
 
-    if self.skillState_ == enStoneState.CanNotUse then
+    if self.skillState_ == enSkillState.CanNotUse then
         local filters = filter.newFilter("BRIGHTNESS", {-0.5})
         self.sprite_:setFilter(filters)
     else

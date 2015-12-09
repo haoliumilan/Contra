@@ -139,10 +139,20 @@ function PlayDirector:onSelectStone_(event)
 end
 
 function PlayDirector:onClearStone_(event)
+	local clearColors = {} -- 每种颜色消除的数量
+	for i=1,5 do
+		clearColors[i] = 0
+	end
+
 	-- 消除选中的珠子
 	local oneStone
 	local rowIndex, colIndex
 	for i,v in ipairs(self.selectStones_) do
+		clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
+		if v:getisSkillEffect() == true then
+			table.remove(self.skillEffectStones_, v)
+		end
+
 		rowIndex, colIndex = v:getRowColIndex()
 		self.stoneViews_[rowIndex][colIndex] = nil
 		v:removeFromParent()
@@ -152,11 +162,16 @@ function PlayDirector:onClearStone_(event)
 	-- 消除技能消除的珠子
 	for i,v in ipairs(self.skillEffectStones_) do
 		if v then
+			clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
 			rowIndex, colIndex = v:getRowColIndex()
 			self.stoneViews_[rowIndex][colIndex] = nil
 			v:removeFromParent()
 			v = nil
 		end
+	end
+
+	for i=1,5 do
+		self.skillDatas_[i]:addCurCount(clearColors[i])
 	end
 
 	self.fsm__:doEvent("resetStone", true)
@@ -210,10 +225,10 @@ function PlayDirector:onResetSkill_(event)
 	self.curSkillStone_ = nil
 	self.skillEffectStones_ = {}
 
-	if self.selectSkill_ then
+	if self.selectSkill_ and self.skillViews_[self.selectSkill_]:getSkillState() == enSkillState.Using then
 		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
-		self.selectSkill_ = nil
 	end
+	self.selectSkill_ = nil
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -342,6 +357,7 @@ function PlayDirector:onTouch(event)
 		   	-- 已经显示技能效果了
 		   	if stoneState == enStoneState.Highlight then
 		   		if oneStone:getSkillData() ~= nil then
+		   			self.selectSkill_:setCurCount(0)
 		   			self.fsm__:doEvent("resetSkill", true)
 		   		else
 		   			self.fsm__:doEvent("useSkill", oneStone)

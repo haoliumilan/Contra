@@ -87,6 +87,10 @@ function StoneView:setSkillEffect(isSkillEffect)
     self:updateSprite_()
 end
 
+function StoneView:getisSkillEffect()
+    return self.isSkillEffect_
+end
+
 ----
 
 function StoneView:updateSprite_()
