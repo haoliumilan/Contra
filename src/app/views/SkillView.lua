@@ -32,8 +32,9 @@ function SkillView:ctor(property)
 	self.sprite_ = display.newFilteredSprite():addTo(self)
 		:scale(1.2)
 
-    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
+    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(255, 255, 255)})
         :align(display.CENTER)
+        :pos(0, -80)
         :addTo(self)
 
     self:updateSkillCount_()

@@ -149,11 +149,11 @@ function PlayDirector:onClearStone_(event)
 	local rowIndex, colIndex
 	for i,v in ipairs(self.selectStones_) do
 		clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
-		if v:getisSkillEffect() == true then
-			table.remove(self.skillEffectStones_, v)
+		rowIndex, colIndex = v:getRowColIndex()
+		if v:getIsSkillEffect() == true then
+			table.removebyvalue(self.skillEffectStones_, v)
 		end
 
-		rowIndex, colIndex = v:getRowColIndex()
 		self.stoneViews_[rowIndex][colIndex] = nil
 		v:removeFromParent()
 		v = nil
@@ -391,26 +391,34 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect(oneStone)
+	oneStone:setSkillEffect(true)
+	table.insert(self.skillEffectStones_, oneStone)
+
 	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 		local newRowIndex, newColIndex
 		for j=1,effect do
 			newRowIndex = rowIndex + directionValue[2]*j
 			newColIndex = colIndex + directionValue[1]*j
 			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
-				local oneStone = self.stoneViews_[newRowIndex][newColIndex]
-				oneStone:setSkillEffect(true)
-				if table.indexof(self.skillEffectStones_, oneStone) == false then
-					table.insert(self.skillEffectStones_, oneStone)
+				local effectStone = self.stoneViews_[newRowIndex][newColIndex]
+				if table.indexof(self.skillEffectStones_, effectStone) == false then
+					if effectStone:getSkillData() ~= nil then
+					-- 技能触发技能
+						self:showSkillEffect(effectStone)
+					else
+						effectStone:setSkillEffect(true)
+						table.insert(self.skillEffectStones_, effectStone)
+					end
 				end
 			end
 		end
 
 	end
 
+	local rowIndex, colIndex = oneStone:getRowColIndex()
 	local skillData = oneStone:getSkillData()
 	local direction = skillData:getDirection()
 	local effect = skillData:getEffect()
-	local rowIndex, colIndex = oneStone:getRowColIndex()
 	local directionValue
 	for i,v in ipairs(direction) do
 		directionValue = DirectionValueArr[v]
