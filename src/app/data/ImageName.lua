@@ -4,8 +4,10 @@
 --
 
 ImageName = {
-	Button01 = "Button01.png",
-	Button02 = "Button02.png",
+	Button1 = "btn_1.png",
+	Button2 = "btn_2.png",
+
+	NineFrame1 = "nine_1.png",
 
 	SkillIcon = "skill/skill_%d.png",
 }

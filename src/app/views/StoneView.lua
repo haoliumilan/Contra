@@ -18,9 +18,9 @@ local StoneView = class("StoneView", function()
     return display.newNode()
 end)
 
-StoneView.Img_Stone_Norml = "stone/stone_n_%d.png"
-StoneView.Img_Stone_Hightlight = "stone/stone_h_%d.png"
-StoneView.Img_Skill_XuKuang = "skill/skill_xukuang.png"
+StoneView.ImgStoneNorml = "stone/stone_n_%d.png"
+StoneView.ImgStoneHightlight = "stone/stone_h_%d.png"
+StoneView.ImgSkillXuKuang = "skill/skill_xukuang.png"
 
 function StoneView:ctor(property)
     self.stoneState_ = property.stoneState or enStoneState.Normal
@@ -97,11 +97,11 @@ function StoneView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
     if self.stoneState_ == enStoneState.Normal then
-        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneColor_)
+        texFile = string.format(StoneView.ImgStoneNorml, self.stoneColor_)
     elseif self.stoneState_ == enStoneState.Highlight then
-        texFile = string.format(StoneView.Img_Stone_Hightlight, self.stoneColor_)
+        texFile = string.format(StoneView.ImgStoneHightlight, self.stoneColor_)
     elseif self.stoneState_ == enStoneState.Disable then
-        texFile = string.format(StoneView.Img_Stone_Norml, self.stoneColor_)
+        texFile = string.format(StoneView.ImgStoneNorml, self.stoneColor_)
     end
 
     if not texFile then return end
@@ -125,7 +125,7 @@ function StoneView:updateSprite_()
 
     if self.isSkillEffect_ == true then
         local size = self.sprite_:getContentSize()
-        display.newSprite(StoneView.Img_Skill_XuKuang)
+        display.newSprite(StoneView.ImgSkillXuKuang)
             :addTo(self.sprite_)
             :pos(size.width/2.0, size.height/2.0)
     end

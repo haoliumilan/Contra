@@ -9,17 +9,17 @@ local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
 end)
 
-PlayLevelScene.Img_Bg = "playLevel/bg.jpg"
-PlayLevelScene.Img_Pause = "playLevel/pause.png"
+PlayLevelScene.ImgBg = "playLevel/bg.jpg"
+PlayLevelScene.ImgPause = "playLevel/pause.png"
 
 function PlayLevelScene:ctor()
 	-- background
-	display.newSprite(PlayLevelScene.Img_Bg)
+	display.newSprite(PlayLevelScene.ImgBg)
 		:addTo(self)
 		:pos(display.cx, display.cy)
 
 	-- 
-    cc.ui.UIPushButton.new(PlayLevelScene.Img_Pause)
+    cc.ui.UIPushButton.new(PlayLevelScene.ImgPause)
         :onButtonPressed(function(event)
             event.target:setScale(1.1)
         end)
@@ -29,7 +29,7 @@ function PlayLevelScene:ctor()
         :onButtonClicked(function()
             app:enterScene("ChooseLevelScene", nil, "flipy")
         end)
-        :pos(display.right - 80, display.top - 70)
+        :pos(display.right - 55, display.top - 55)
         :addTo(self, 1)
 
     -- 

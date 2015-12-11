@@ -14,13 +14,13 @@ end)
 -- 常量
 PlayDirector.SMaxRow = 7 -- 最大行数
 PlayDirector.SMaxCol = 7 -- 最大列数
-PlayDirector.SOriPosX = 15 -- 珠子矩阵最左坐标
-PlayDirector.SOriPosY = 110 
-PlayDirector.SSpace = 20 -- 珠子的间隔
-PlayDirector.SSide = 80 -- 珠子的边长
-PlayDirector.DropTime = 0.2 -- 珠子掉落一个格子用的时间
+PlayDirector.SOriPosX = 34 -- 珠子矩阵最左坐标
+PlayDirector.SOriPosY = 40 
+PlayDirector.SSpace = 6 -- 珠子的间隔
+PlayDirector.SSide = 90 -- 珠子的边长
+PlayDirector.TimeDrop = 0.2 -- 珠子掉落一个格子用的时间
 PlayDirector.SkOriPosX = 0 -- 技能最左坐标
-PlayDirector.SkOriPosY = 975 
+PlayDirector.SkOriPosY = 850 
 PlayDirector.SkSpace = 25 -- 技能之间的间距
 PlayDirector.SkSide = 120 -- 技能的边长
 
@@ -116,6 +116,8 @@ end
 function PlayDirector:onSelectStone_(event)
 	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 	local selectStone = event.args[1]
+	self.skillViews_[selectStone:getColorType()]:showSkillCount(true)
+
 	self.selectStones_ = self:getCanLinkStones(selectStone)
 	self.skillEffectStones_ = {}
 
@@ -191,6 +193,10 @@ function PlayDirector:onResetStone_(event)
 		end
 	end
 
+	for i=1,5 do
+		self.skillViews_[i]:showSkillCount(false)
+	end
+
 	-- 如果消除了，就要更新Matrix
 	if event.args[1] then
 		self:updateMatrix()
@@ -199,11 +205,11 @@ end
 
 function PlayDirector:onSelectSkill_(event)
 	if self.selectSkill_ then
-		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
+		self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.CanUse)
 	end
 
 	self.selectSkill_ = event.args[1]
-	self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.Using)
+	self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.Using)
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -225,8 +231,8 @@ function PlayDirector:onResetSkill_(event)
 	self.curSkillStone_ = nil
 	self.skillEffectStones_ = {}
 
-	if self.selectSkill_ and self.skillViews_[self.selectSkill_]:getSkillState() == enSkillState.Using then
-		self.skillViews_[self.selectSkill_]:setSkillState(enSkillState.CanUse)
+	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getColorType()]:getSkillState() == enSkillState.Using then
+		self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.CanUse)
 	end
 	self.selectSkill_ = nil
 
@@ -266,7 +272,7 @@ function PlayDirector:initSkill()
 	for i=1,5 do
 		self.skillDatas_[i] = SkillData.new(i)
 		posX = PlayDirector.SkOriPosX + PlayDirector.SkSpace * i + PlayDirector.SkSide * (i - 0.5)
-		self.skillViews_[self.skillDatas_[i]] = app:createView("SkillView", {skillData = self.skillDatas_[i]})
+		self.skillViews_[i] = app:createView("SkillView", {skillData = self.skillDatas_[i]})
 			:addTo(self)
 			:pos(posX, PlayDirector.SkOriPosY)
 	end
@@ -313,7 +319,7 @@ function PlayDirector:updateMatrix()
 					self.stoneViews_[i+tempIndex][j] = nil
 				end
 
-				self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.DropTime, cc.p(pos1X, pos1Y)))
+				self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
 
 			end
 		end
@@ -377,6 +383,8 @@ function PlayDirector:onTouch(event)
     	if state == "normal" or state == "skillSelect" or state == "skillUse" then
     		if oneSkill ~= self.selectSkill_ and oneSkill:getCurCount() >= oneSkill:getNeedCount() then
 	    		self.fsm__:doEvent("selectSkill", oneSkill)
+	    	else
+	    		self.skillViews_[oneSkill:getColorType()]:showSkillCount(true, true)
 	    	end
     	else
     		-- 取消选中

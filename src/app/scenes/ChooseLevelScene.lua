@@ -18,7 +18,7 @@ function ChooseLevelScene:ctor()
 
 	self:createPageView()
 
-	cc.ui.UIPushButton.new(ImageName.Button01, {scale9 = true})
+	cc.ui.UIPushButton.new(ImageName.Button1, {scale9 = true})
 	    :setButtonSize(200, 80)
 	    :setButtonLabel(cc.ui.UILabel.new({text = "BACK"}))
 	    :onButtonPressed(function(event)

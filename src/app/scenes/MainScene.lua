@@ -3,9 +3,9 @@ local MainScene = class("MainScene", function()
     return display.newScene("MainScene")
 end)
 
-MainScene.Img_Btn_Play = "login/play.png"
-MainScene.Img_Black_Cover = "login/black_cover.png"
-MainScene.Img_Pic_Room = "login/pic_room.jpg"
+MainScene.ImgBtnPlay = "login/play.png"
+MainScene.ImgBlackCover = "login/black_cover.png"
+MainScene.ImgPicRoom = "login/pic_room.jpg"
 
 function MainScene:ctor()
     -- touchLayer 用于接收触摸事件
@@ -17,20 +17,21 @@ function MainScene:ctor()
     -- 添加触摸事件处理函数
     self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
-    self.bigImg = display.newSprite(MainScene.Img_Pic_Room)
+    self.bigImg = display.newSprite(MainScene.ImgPicRoom)
         :addTo(self)
         :pos(display.cx, display.cy)
+        :scale(1.2)
     local size = self.bigImg:getContentSize()
-    self.imgMaxX = size.width/2
-    self.imgMinX = display.width - size.width/2
-    self.imgMaxY = size.height/2
-    self.imgMinY = display.height - size.height/2
+    self.imgMaxX = size.width/2*1.2
+    self.imgMinX = display.width - size.width/2*1.2
+    self.imgMaxY = size.height/2*1.2
+    self.imgMinY = display.height - size.height/2*1.2
 
-    display.newSprite(MainScene.Img_Black_Cover)
+    display.newSprite(MainScene.ImgBlackCover)
         :addTo(self, 1)
         :pos(display.cx, display.cy)
 
-    cc.ui.UIPushButton.new(MainScene.Img_Btn_Play)
+    cc.ui.UIPushButton.new(MainScene.ImgBtnPlay)
         :onButtonPressed(function(event)
             event.target:setScale(1.1)
         end)
@@ -62,8 +63,8 @@ function MainScene:onTouch(event)
 
         local posY = self.bigImg:getPositionY()
         posY = posY - (event.prevY - event.y)
-        -- posY = math.min(posY, self.imgMaxY)
-        -- posY = math.max(posY, self.imgMinY)
+        posY = math.min(posY, self.imgMaxY)
+        posY = math.max(posY, self.imgMinY)
 
         self.bigImg:setPosition(posX, posY)
 
