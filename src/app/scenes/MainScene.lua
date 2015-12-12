@@ -17,9 +17,8 @@ function MainScene:ctor()
     -- 添加触摸事件处理函数
     self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
-    self.bigImg = display.newSprite(MainScene.ImgPicRoom)
+    self.bigImg = display.newSprite(MainScene.ImgPicRoom, display.cx, display.cy)
         :addTo(self)
-        :pos(display.cx, display.cy)
         :scale(1.2)
     local size = self.bigImg:getContentSize()
     self.imgMaxX = size.width/2*1.2
@@ -27,9 +26,8 @@ function MainScene:ctor()
     self.imgMaxY = size.height/2*1.2
     self.imgMinY = display.height - size.height/2*1.2
 
-    display.newSprite(MainScene.ImgBlackCover)
+    display.newSprite(MainScene.ImgBlackCover, display.cx, display.cy)
         :addTo(self, 1)
-        :pos(display.cx, display.cy)
 
     cc.ui.UIPushButton.new(MainScene.ImgBtnPlay)
         :onButtonPressed(function(event)

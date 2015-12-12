@@ -15,9 +15,6 @@ local SkillView = class("SkillView", function()
     return display.newNode()
 end)
 
-SkillView.ImgStoneNorml = "stone/stone_n_%d.png"
-SkillView.ImgStoneHightlight = "stone/stone_h_%d.png"
-
 SkillView.TimeSkBgMove = 0.2 
 SkillView.TimeSkBgDelay = 1.0 
 
@@ -40,10 +37,15 @@ function SkillView:ctor(property)
     self.labelBg_ = display.newScale9Sprite(ImageName.NineFrame1, 0, 0, cc.size(60, 60))
         :addTo(self)
 
-    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(255, 255, 255)})
-        :align(display.CENTER)
+    -- self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(255, 255, 255)})
+    --     :align(display.CENTER)
+    --     :pos(30, 20)
+    --     :addTo(self.labelBg_)
+    
+    self.label_ = display.newTTFLabel({size = 30, color = display.COLOR_White}) 
         :pos(30, 20)
-        :addTo(self.labelBg_)
+        :addTo(self.labelBg_) 
+
 
     self:updateSkillCount_()
 
@@ -103,11 +105,11 @@ function SkillView:updateSprite_()
     self.sprite_:removeAllChildren()
     local colorType = self.skillData_:getColorType()
     if self.skillState_ == enSkillState.CanUse then
-        texFile = string.format(SkillView.ImgStoneNorml, colorType)
+        texFile = string.format(ImageName.StoneNorml, colorType)
     elseif self.skillState_ == enSkillState.Using then
-        texFile = string.format(SkillView.ImgStoneHightlight, colorType)
+        texFile = string.format(ImageName.StoneHightlight, colorType)
     elseif self.skillState_ == enSkillState.CanNotUse then
-        texFile = string.format(SkillView.ImgStoneNorml, colorType)
+        texFile = string.format(ImageName.StoneNorml, colorType)
     end
 
     if not texFile then return end
@@ -122,10 +124,9 @@ function SkillView:updateSprite_()
 
     texFile = string.format(ImageName.SkillIcon, self.skillData_:getIconIndex())
     local size = self.sprite_:getContentSize()
-    display.newSprite(texFile)
+    display.newSprite(texFile, size.width*0.5, size.height*0.5)
     	:addTo(self.sprite_)
     	:rotation(self.skillData_:getIconAngle())
-    	:pos(size.width*0.5, size.height*0.5)
 end
 
 return SkillView

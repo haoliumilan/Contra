@@ -3,76 +3,106 @@
 -- Date: 2015-12-03 11:51:21
 -- 选择关卡界面
 
+local ChooseLevelCell = import("..views.ChooseLevelCell")
+
 local ChooseLevelScene = class("ChooseLevelScene", function()
     return display.newScene("ChooseLevelScene")
 end)
 
+ChooseLevelScene.ImgBg = "level/bg.jpg"
+
 function ChooseLevelScene:ctor()
-	app:createGrid(self)
+    self.curSelectIndex_ = 0 -- 当前选中的cell的index
+    self.openCount_ = 10 -- 当前开启的关卡的数量
 
-	cc.ui.UILabel.new({
-	        UILabelType = 2, text = "关卡选择", size = 50,
-	        color = cc.c3b(255, 0, 0)})
-	    :align(display.CENTER, display.cx, display.top-100)
-	    :addTo(self)
+    -- background
+    display.newSprite(ChooseLevelScene.ImgBg, display.cx, display.cy)
+        :addTo(self)
 
-	self:createPageView()
+    -- top
+    display.newSprite(ImageName.TopBg, display.cx, display.top - 65)
+        :addTo(self, 1)
 
-	cc.ui.UIPushButton.new(ImageName.Button1, {scale9 = true})
-	    :setButtonSize(200, 80)
-	    :setButtonLabel(cc.ui.UILabel.new({text = "BACK"}))
-	    :onButtonPressed(function(event)
-	        event.target:setScale(1.1)
-	    end)
-	    :onButtonRelease(function(event)
-	        event.target:setScale(1.0)
-	    end)
-	    :onButtonClicked(function()
-	        app:enterScene("MainScene", nil, "flipy")
-	    end)
-	    :pos(display.left+150, display.bottom+100)
-	    :addTo(self)
-end
+    -- bottom
+    display.newSprite(ImageName.BottomBg, display.cx, 65)
+        :addTo(self, 1)
 
-function ChooseLevelScene:createPageView()
-    self.pv = cc.ui.UIPageView.new {
-        viewRect = cc.rect(70, 200, 610, 1000),
-        column = 3, row = 3,
-        padding = {left = 20, right = 20, top = 20, bottom = 20},
-        columnSpace = 10, rowSpace = 10}
+    -- listview
+    self.listView_ = cc.ui.UIListView.new {
+        -- bgColor = cc.c4b(200, 200, 200, 120),
+        -- bg = "sunset.png",
+        -- bgScale9 = true,
+        async = true, --异步加载
+        viewRect = cc.rect(0, 130, 750, 1074),
+        direction = cc.ui.UIScrollView.DIRECTION_VERTICAL,
+        -- scrollbarImgV = "bar.png"
+    }
         :onTouch(handler(self, self.touchListener))
         :addTo(self)
 
-    -- add items
-    for i=1,9 do
-        local item = self.pv:newItem()
-        local content = cc.LayerColor:create(
-            cc.c4b(math.random(250),
-                math.random(250),
-                math.random(250),
-                250))
-        content:setContentSize(160, 270)
-        content:setTouchEnabled(false)
-        item:addChild(content)
-        self.pv:addItem(item)        
+    self.listView_:setDelegate(handler(self, self.sourceDelegate))
 
-        local title = cc.ui.UILabel.new(
-            {text = "item"..i,
-            size = 36,
-            align = cc.ui.TEXT_ALIGN_CENTER,
-            color = display.COLOR_BLACK,
-            dimensions = cc.size(160, 270),})
-        	:addTo(content)
+    self.listView_:reload()
+
+end
+
+function ChooseLevelScene:sourceDelegate(listView, tag, idx)
+    if cc.ui.UIListView.COUNT_TAG == tag then
+        return 50
+    elseif cc.ui.UIListView.CELL_TAG == tag then
+        local item
+        local content
+
+        item = self.listView_:dequeueItem()
+        if not item then
+            item = self.listView_:newItem()
+            content = ChooseLevelCell.new(handler(self, self.cellCb))
+            item:addContent(content)
+        else
+            content = item:getContent()
+        end
+
+        if idx == self.curSelectIndex_ then
+            content:showContentView(enLevelCellType.Open, nil, idx)
+            item:setItemSize(750, 966)
+        elseif idx <= self.openCount_ then
+            content:showContentView(enLevelCellType.Close, nil, idx)
+            item:setItemSize(750, 150)
+        else
+            content:showContentView(enLevelCellType.Lock, nil, idx)
+            item:setItemSize(750, 150)
+        end
+
+        return item
+    else
     end
-    self.pv:reload()
-
 end
 
 function ChooseLevelScene:touchListener(event)
-    dump(event, "TestUIPageViewScene - event:")
     local listView = event.listView
-    app:enterScene("PlayLevelScene", nil, "flipy")
+    if "clicked" == event.name then
+        print("async list view clicked idx:" .. event.itemPos)
+    end
 end
 
+function ChooseLevelScene:cellCb(event)
+    if event.name == ChooseLevelCell.EventCellClicked then
+        if event.cellType == enLevelCellType.Close then
+            self.curSelectIndex_ = event.idx
+            self.listView_:reload()
+
+        elseif event.cellType == enLevelCellType.Open then
+            self.curSelectIndex_ = 0
+            self.listView_:reload()
+
+        elseif event.cellType == enLevelCellType.Lock then
+
+        end
+
+    elseif event.name == ChooseLevelCell.EventSure then
+        app:enterScene("PlayLevelScene")
+
+    end
+end
 
 return ChooseLevelScene

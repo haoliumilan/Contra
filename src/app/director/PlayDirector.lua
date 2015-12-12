@@ -3,9 +3,9 @@
 -- Date: 2015-12-03 20:40:46
 -- 
 
-local StoneView = import("app.views.StoneView")
-local SkillView = import("app.views.SkillView")
-local SkillData = import("app.data.SkillData")
+local StoneView = import("..views.StoneView")
+local SkillView = import("..views.SkillView")
+local SkillData = import("..data.SkillData")
 
 local PlayDirector = class("PlayDirector", function()
 	return display.newNode()

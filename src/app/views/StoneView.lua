@@ -3,7 +3,7 @@
 -- Date: 2015-12-03 18:28:24
 -- 珠子的视图
 
-local SkillData = import("app.data.SkillData")
+local SkillData = import("..data.SkillData")
 
 --  状态类型
 enStoneState = {
@@ -18,8 +18,6 @@ local StoneView = class("StoneView", function()
     return display.newNode()
 end)
 
-StoneView.ImgStoneNorml = "stone/stone_n_%d.png"
-StoneView.ImgStoneHightlight = "stone/stone_h_%d.png"
 StoneView.ImgSkillXuKuang = "skill/skill_xukuang.png"
 
 function StoneView:ctor(property)
@@ -97,11 +95,11 @@ function StoneView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
     if self.stoneState_ == enStoneState.Normal then
-        texFile = string.format(StoneView.ImgStoneNorml, self.stoneColor_)
+        texFile = string.format(ImageName.StoneNorml, self.stoneColor_)
     elseif self.stoneState_ == enStoneState.Highlight then
-        texFile = string.format(StoneView.ImgStoneHightlight, self.stoneColor_)
+        texFile = string.format(ImageName.StoneHightlight, self.stoneColor_)
     elseif self.stoneState_ == enStoneState.Disable then
-        texFile = string.format(StoneView.ImgStoneNorml, self.stoneColor_)
+        texFile = string.format(ImageName.StoneNorml, self.stoneColor_)
     end
 
     if not texFile then return end
@@ -117,17 +115,15 @@ function StoneView:updateSprite_()
     if self.skillData_ then
         texFile = string.format(ImageName.SkillIcon, self.skillData_:getIconIndex())
         local size = self.sprite_:getContentSize()
-        display.newSprite(texFile)
+        display.newSprite(texFile, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
             :rotation(self.skillData_:getIconAngle())
-            :pos(size.width*0.5, size.height*0.5)
     end
 
     if self.isSkillEffect_ == true then
         local size = self.sprite_:getContentSize()
-        display.newSprite(StoneView.ImgSkillXuKuang)
+        display.newSprite(StoneView.ImgSkillXuKuang, size.width/2.0, size.height/2.0)
             :addTo(self.sprite_)
-            :pos(size.width/2.0, size.height/2.0)
     end
 
 end

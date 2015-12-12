@@ -4,10 +4,19 @@
 --
 
 ImageName = {
-	Button1 = "btn_1.png",
-	Button2 = "btn_2.png",
+	Button1 = "global/btn_1.png",
+	Button2 = "global/btn_2.png",
 
-	NineFrame1 = "nine_1.png",
+	NineFrame1 = "global/nine_1.png",
 
+	-- 
+	TopBg = "global/top.png",
+	BottomBg = "global/bottom.png",
+
+	-- stone
+	StoneNorml = "stone/stone_n_%d.png",
+	StoneHightlight = "stone/stone_h_%d.png",
+
+	-- skill
 	SkillIcon = "skill/skill_%d.png",
 }

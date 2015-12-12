@@ -3,20 +3,19 @@
 -- Date: 2015-12-03 12:10:35
 -- 游戏界面
 
-local PlayDirector = import("app.director.PlayDirector")
+local PlayDirector = import("..director.PlayDirector")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
 end)
 
-PlayLevelScene.ImgBg = "playLevel/bg.jpg"
-PlayLevelScene.ImgPause = "playLevel/pause.png"
+PlayLevelScene.ImgBg = "play/bg.jpg"
+PlayLevelScene.ImgPause = "play/pause.png"
 
 function PlayLevelScene:ctor()
 	-- background
-	display.newSprite(PlayLevelScene.ImgBg)
+	display.newSprite(PlayLevelScene.ImgBg, display.cx, display.cy)
 		:addTo(self)
-		:pos(display.cx, display.cy)
 
 	-- 
     cc.ui.UIPushButton.new(PlayLevelScene.ImgPause)

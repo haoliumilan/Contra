@@ -1,7 +1,7 @@
 --
 -- Author: liuhao
 -- Date: 2015-12-07 17:41:13
---
+-- 技能配置
 
 --[[
 	id,
@@ -17,8 +17,6 @@ local SkillCfg = {}
 
 local cofigArr = {}
 
-
--- 1回合内,自身攻击提升1级
 cofigArr[1] = {
 	colorType = 1, direction = {1}, effect = 2, iconIndex = 1, needCount = 30,
 }
@@ -38,7 +36,6 @@ cofigArr[4] = {
 cofigArr[5] = {
 	colorType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 30,
 }
-
 
 function SkillCfg.numLevels()
     return #cofigArr
