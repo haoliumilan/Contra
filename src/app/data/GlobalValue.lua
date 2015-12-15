@@ -4,15 +4,20 @@
 -- 游戏中使用的全局变量
 
 -- 颜色类型
-enColorType = {
-    "Red",
-    "Yellow",
-    "Blue",
-    "Green",
-    "Purple",
+enStoneType = {
+    "Red", -- 红色珠子
+    "Yellow", -- 黄色珠子
+    "Blue", -- 蓝色珠子
+    "Green", -- 绿色珠子
+    "Purple", -- 紫色珠子
+    "Iron", -- 铁珠子、不能被消除、不能移动
+    "WoodA1", -- 木珠子、不能移动，会变成woodA2
+    "WoodA2", -- 木柱子、不能移动、可消除
+    "WoodB1", -- 木珠子、不能移动，会变成woodB2
+    "WoodB2", -- 木柱子、不能移动、可消除
     "Max"
 }
-enColorType = EnumTable(enColorType, 0)
+enStoneType = EnumTable(enStoneType, 0)
 
 -- 珠子关联方向类型
 DirectionValueArr = {

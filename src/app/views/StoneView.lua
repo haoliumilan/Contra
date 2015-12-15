@@ -4,6 +4,7 @@
 -- 珠子的视图
 
 local SkillData = import("..data.SkillData")
+local StoneCfg = import("..config.StoneCfg")
 
 --  状态类型
 enStoneState = {
@@ -22,7 +23,8 @@ StoneView.ImgSkillXuKuang = "skill/skill_xukuang.png"
 
 function StoneView:ctor(property)
     self.stoneState_ = property.stoneState or enStoneState.Normal
-    self.stoneColor_ = property.stoneColor or enColorType.Red 
+    self.stoneType_ = property.stoneType or enStoneType.Red 
+    self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
@@ -30,16 +32,20 @@ function StoneView:ctor(property)
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.skillEffectSp_ = nil
- --    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
-	--     :align(display.CENTER)
-	--     :addTo(self)
+    self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
+	    :align(display.CENTER)
+	    :addTo(self)
 
-	-- self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
+	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
 
     self:updateSprite_()
 end
 
 ---- property
+
+function StoneView:getIsCanSelected()
+    return self.stoneCfg_.is_selected
+end
 
 function StoneView:setStoneState(stoneState, isClearSkillEffect)
     self.stoneState_ = stoneState
@@ -53,18 +59,19 @@ function StoneView:getStoneState()
     return self.stoneState_
 end
 
-function StoneView:setStoneColor(stoneColor)
-    self.stoneColor_ = stoneColor
+function StoneView:setStoneType(stoneType)
+    self.stoneType_ = stoneType
+    self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
 end
 
 function StoneView:getColorType()
-    return self.stoneColor_
+    return self.stoneType_
 end
 
 function StoneView:setRowColIndex(rowIndex, colIndex)
     self.rowIndex_ = rowIndex
     self.colIndex_ = colIndex
-    -- self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
+    self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
 end
 
 function StoneView:getRowColIndex()
@@ -95,11 +102,11 @@ function StoneView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
     if self.stoneState_ == enStoneState.Normal then
-        texFile = string.format(ImageName.StoneNorml, self.stoneColor_)
+        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
     elseif self.stoneState_ == enStoneState.Highlight then
-        texFile = string.format(ImageName.StoneHightlight, self.stoneColor_)
+        texFile = string.format(ImageName.StoneHightlight, self.stoneType_)
     elseif self.stoneState_ == enStoneState.Disable then
-        texFile = string.format(ImageName.StoneNorml, self.stoneColor_)
+        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
     end
 
     if not texFile then return end

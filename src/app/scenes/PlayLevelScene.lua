@@ -31,6 +31,12 @@ function PlayLevelScene:ctor()
         :pos(display.right - 55, display.top - 55)
         :addTo(self, 1)
 
+    display.newTTFLabel({text = "一二三四五六七八九十", size = 40, color = display.COLOR_BLACK,
+            dimensions = cc.size(300, 40)})
+        :pos(display.cx, display.cy + 400)
+        -- :size(300, 50)
+        :addTo(self, 1)
+
     -- 
     self.playDirector = PlayDirector.new()
 	    :addTo(self)

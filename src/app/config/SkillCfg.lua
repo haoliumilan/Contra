@@ -37,10 +37,6 @@ cofigArr[5] = {
 	colorType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 30,
 }
 
-function SkillCfg.numLevels()
-    return #cofigArr
-end
-
 function SkillCfg.get(skillId)
     assert(skillId >= 1 and skillId <= #cofigArr, string.format("SkillCfg.get() - invalid skillId %s", tostring(skillId)))
     local oneSkill = clone(cofigArr[skillId])

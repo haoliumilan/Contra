@@ -18,7 +18,7 @@ PlayDirector.SOriPosX = 34 -- 珠子矩阵最左坐标
 PlayDirector.SOriPosY = 40 
 PlayDirector.SSpace = 6 -- 珠子的间隔
 PlayDirector.SSide = 90 -- 珠子的边长
-PlayDirector.TimeDrop = 0.2 -- 珠子掉落一个格子用的时间
+PlayDirector.TimeDrop = 0.1 -- 珠子掉落一个格子用的时间
 PlayDirector.SkOriPosX = 0 -- 技能最左坐标
 PlayDirector.SkOriPosY = 850 
 PlayDirector.SkSpace = 25 -- 技能之间的间距
@@ -102,11 +102,19 @@ function PlayDirector:onStart_(event)
 	-- 初始化，随机7x7珠子
 	local oneStone = nil
 	local posX, posY
+	local oneStoneType
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getPosByRowColIndex(i, j)
-			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneColor = self:getRandomStoneColor()})
+			if i == 5 and j ~= 4 then
+				oneStoneType = enStoneType.Iron
+			elseif i <= 4 then
+				oneStoneType = enStoneType.Yellow
+			else
+				oneStoneType = self:getRandomStoneColor()
+			end
+			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType})
 				:addTo(self)
 				:pos(posX, posY)
 		end
@@ -278,12 +286,67 @@ function PlayDirector:initSkill()
 	end
 end
 
+-- 消除后，更新7x7矩阵, 有不会移动的珠子
+function PlayDirector:updateMatrix2()
+	local pos1X, pos1Y, pos2X, pos2Y
+	local oneStone
+	local threeX = {0, 1, -1}
+	local isRunAction = false
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone == nil then
+			-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
+				pos1X, pos1Y = self:getPosByRowColIndex(i, j)
+				if i < PlayDirector.SMaxRow then
+					for k,v in ipairs(threeX) do
+						if j+v > 0 and j+v <= PlayDirector.SMaxCol then
+							oneStone = self.stoneViews_[i+1][j+v]
+						end
+						if k == 1 and oneStone == nil then
+							print("·updateMatrix2·", i, j, v)
+							break
+						end
+
+						if oneStone and oneStone:getIsCanSelected() == true then
+							oneStone:setRowColIndex(i, j)
+							self.stoneViews_[i][j] = oneStone
+							self.stoneViews_[i+1][j+v] = nil
+							break
+						end
+					end
+				else
+					-- 最上面一行了，创建新的吧
+					pos2X, pos2Y = self:getPosByRowColIndex(i+1, j)					
+					oneStone = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
+						:addTo(self)
+						:pos(pos2X, pos2Y)					
+					self.stoneViews_[i][j] = oneStone
+				end
+
+				if oneStone ~= nil and oneStone:getIsCanSelected() == true then
+					self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
+					isRunAction = true
+				end
+			end
+		end
+	end
+
+	if isRunAction == true then
+		self:performWithDelay(function()
+			self:updateMatrix2()
+			end, PlayDirector.TimeDrop)
+	end
+end
+
 -- 消除后，更新7x7矩阵
 function PlayDirector:updateMatrix()
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
 	local tempIndex
 	local addStoneArr = {} -- 用来记录每一列新创建的珠子
+	local threeX = {0, 1, -1}
+	local isFixed = false -- 是否有固定的
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -310,21 +373,29 @@ function PlayDirector:updateMatrix()
 
 					pos2X, pos2Y = self:getPosByRowColIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
 					
-					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneColor = self:getRandomStoneColor()})
+					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
 						:addTo(self)
 						:pos(pos2X, pos2Y)
-				else
+					oneStone = self.stoneViews_[i][j]
+				elseif oneStone:getIsCanSelected() == true then
 					oneStone:setRowColIndex(i, j)
 					self.stoneViews_[i][j] = oneStone
 					self.stoneViews_[i+tempIndex][j] = nil
+				else
+					isFixed = true
 				end
 
-				self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
-
+				if oneStone and oneStone:getIsCanSelected() == true then
+					oneStone:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
+				end
 			end
 		end
 	end
-
+	if isFixed == true then
+		self:performWithDelay(function()
+			self:updateMatrix2()
+		end, PlayDirector.TimeDrop)
+	end
 end
 
 -- 触摸回调
@@ -342,8 +413,9 @@ function PlayDirector:onTouch(event)
     	-- 选中了stone
     	local stoneState = oneStone:getStoneState()
     	if state == "normal" then
-    		self.fsm__:doEvent("selectStone", oneStone)
-
+    		if oneStone:getIsCanSelected() == true then
+	    		self.fsm__:doEvent("selectStone", oneStone)
+	    	end
     	elseif state == "stoneSelect" then
     		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 2 then
 	    		-- 消除
@@ -551,7 +623,7 @@ end
 
 -- 获得一个随机颜色
 function PlayDirector:getRandomStoneColor()
-	return math.random(enColorType.Red, enColorType.Purple)
+	return math.random(enStoneType.Red, enStoneType.Purple)
 end
 
 

@@ -64,10 +64,6 @@ cofigArr[3] = {
 	picture = "pic_3"
 }
 
-function LevelCfg.numLevels()
-    return #cofigArr
-end
-
 function LevelCfg.get(levelId)
     assert(levelId >= 1 and levelId <= #cofigArr, string.format("LevelCfg.get() - invalid levelId %s", tostring(levelId)))
     local oneLevel = clone(cofigArr[levelId])
