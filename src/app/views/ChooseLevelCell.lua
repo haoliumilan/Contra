@@ -50,10 +50,10 @@ function ChooseLevelCell:showContentView(cellType, levelData, idx)
 	self.idx_ = idx
 	self.levelData_ = levelData
 
-	if self.cellType_ ~= cellType and (self.cellType_ == enLevelCellType.Open or cellType == enLevelCellType.Open) then
+	-- if self.cellType_ ~= cellType and (self.cellType_ == enLevelCellType.Open or cellType == enLevelCellType.Open) then
 		self:removeAllChildren()
 		self:initAllValue()
-	end
+	-- end
 
 	if cellType == enLevelCellType.Close then
 		self:showCloseView()
@@ -79,12 +79,8 @@ function ChooseLevelCell:showCloseView()
 	end
 
 	if self.cellBg_ == nil then
-		self.cellBg_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgCellCloseBg)
-		    :onButtonClicked(function()
-		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
-		    end)
-		    :addTo(self)
-	    self.cellBg_:setTouchSwallowEnabled(false)
+		self.cellBg_ = display.newSprite(ChooseLevelCell.ImgCellCloseBg)
+			:addTo(self)
 	end
 
 	if self.newPicBtn_ == nil then
@@ -114,27 +110,46 @@ function ChooseLevelCell:showCloseView()
 	        :pos(-40, 10)
 	        :addTo(self)
 	end
-	self.titleLb_:setString(string.format("%d.艾利之书", self.idx_))
+	self.titleLb_:setString(string.format("%d.艾利之书", self.idx_+1))
 
 	if self.arrowSp_ == nil then
-		self.arrowSp_ = display.newSprite(ChooseLevelCell.ImgArrowDown, 230, 10)
-			:addTo(self)
+		self.arrowSp_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgArrowDown)
+			:onButtonPressed(function(event)
+	            event.target:setScale(1.1)
+	        end)
+	        :onButtonRelease(function(event)
+	            event.target:setScale(1.0)
+	        end)
+		    :onButtonClicked(function()
+		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
+		    end)
+		    :pos(230, 10)
+		    :addTo(self)
+	    self.cellBg_:setTouchSwallowEnabled(false)
+
 	end
 end
 
 function ChooseLevelCell:showOpenView()
 	if self.cellBg_ == nil then
-		self.cellBg_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgCellOpenBg)
-		    :onButtonClicked(function()
-		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
-		    end)
-		    :addTo(self)
-	    self.cellBg_:setTouchSwallowEnabled(false)
+		self.cellBg_ = display.newSprite(ChooseLevelCell.ImgCellOpenBg)
+			:addTo(self)
 	end
 
 	if self.arrowSp_ == nil then
-		self.arrowSp_ = display.newSprite(ChooseLevelCell.ImgArrowUp, 230, 440)
-			:addTo(self)
+		self.arrowSp_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgArrowUp)
+			:onButtonPressed(function(event)
+	            event.target:setScale(1.1)
+	        end)
+	        :onButtonRelease(function(event)
+	            event.target:setScale(1.0)
+	        end)
+		    :onButtonClicked(function()
+		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
+		    end)
+		    :pos(230, 440)
+		    :addTo(self)
+	    self.cellBg_:setTouchSwallowEnabled(false)
 	end
 
 	if self.sureBtn_ == nil then
@@ -162,12 +177,8 @@ function ChooseLevelCell:showLockView()
 	end
 
 	if self.cellBg_ == nil then
-		self.cellBg_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgCellCloseBg)
-		    :onButtonClicked(function()
-		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
-		    end)
-		    :addTo(self)
-	    self.cellBg_:setTouchSwallowEnabled(false)
+		self.cellBg_ = display.newSprite(ChooseLevelCell.ImgCellCloseBg)
+			:addTo(self)
 	end
 
 	if self.newPicBtn_ then
@@ -185,11 +196,22 @@ function ChooseLevelCell:showLockView()
 	        :pos(-40, 10)
 	        :addTo(self)
 	end
-	self.titleLb_:setString(string.format("%d.艾利之书", self.idx_))
+	self.titleLb_:setString(string.format("%d.艾利之书", self.idx_+1))
 
 	if self.arrowSp_ == nil then
-		self.arrowSp_ = display.newSprite(ChooseLevelCell.ImgArrowDown, 230, 10)
-			:addTo(self)
+		self.arrowSp_ = cc.ui.UIPushButton.new(ChooseLevelCell.ImgArrowDown)
+			:onButtonPressed(function(event)
+	            event.target:setScale(1.1)
+	        end)
+	        :onButtonRelease(function(event)
+	            event.target:setScale(1.0)
+	        end)
+		    :onButtonClicked(function()
+		    	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
+		    end)
+		    :pos(230, 10)
+		    :addTo(self)
+	    self.cellBg_:setTouchSwallowEnabled(false)
 	end
 end
 

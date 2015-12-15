@@ -12,8 +12,8 @@ end)
 ChooseLevelScene.ImgBg = "level/bg.jpg"
 
 function ChooseLevelScene:ctor()
-    self.curSelectIndex_ = 0 -- 当前选中的cell的index
-    self.openCount_ = 10 -- 当前开启的关卡的数量
+    self.curSelectIndex_ = -1 -- 当前选中的cell的index
+    self.openCount_ = 15 -- 当前开启的关卡的数量
 
     -- background
     display.newSprite(ChooseLevelScene.ImgBg, display.cx, display.cy)
@@ -28,18 +28,20 @@ function ChooseLevelScene:ctor()
         :addTo(self, 1)
 
     -- listview
-    self.listView = cc.TableView:create(cc.size(750, 900))
-    self.listView:setDelegate()
-    self:addChild(self.listView)
-    self.listView:pos(display.cx, display.cy)
-    self.listView:setVerticalFillOrder(cc.TABLEVIEW_FILL_TOPDOWN)
+    self.listView_ = cc.TableView:create(cc.size(750, 1034))
+    self.listView_:setDelegate()
+    self:addChild(self.listView_)
+    self.listView_:pos(0, 150)
+    self.listView_:setVerticalFillOrder(cc.TABLEVIEW_FILL_TOPDOWN)
+    self.listView_:setDirection(cc.SCROLLVIEW_DIRECTION_VERTICAL)
 
-    self.listView:registerScriptHandler(handler(self,self.numberOfCellsInTableView),cc.NUMBER_OF_CELLS_IN_TABLEVIEW)  
-    self.listView:registerScriptHandler(handler(self,self.scrollViewDidScroll),cc.SCROLLVIEW_SCRIPT_SCROLL)
-    self.listView:registerScriptHandler(handler(self,self.scrollViewDidZoom),cc.SCROLLVIEW_SCRIPT_ZOOM)
-    self.listView:registerScriptHandler(handler(self,self.tableCellTouched),cc.TABLECELL_TOUCHED)
-    self.listView:registerScriptHandler(handler(self,self.cellSizeForTable),cc.TABLECELL_SIZE_FOR_INDEX)
-    self.listView:registerScriptHandler(handler(self,self.tableCellAtIndex),cc.TABLECELL_SIZE_AT_INDEX)
+    self.listView_:registerScriptHandler(handler(self,self.numberOfCellsInTableView),cc.NUMBER_OF_CELLS_IN_TABLEVIEW)  
+    self.listView_:registerScriptHandler(handler(self,self.scrollViewDidScroll),cc.SCROLLVIEW_SCRIPT_SCROLL)
+    self.listView_:registerScriptHandler(handler(self,self.scrollViewDidZoom),cc.SCROLLVIEW_SCRIPT_ZOOM)
+    self.listView_:registerScriptHandler(handler(self,self.tableCellTouched),cc.TABLECELL_TOUCHED)
+    self.listView_:registerScriptHandler(handler(self,self.cellSizeForTable),cc.TABLECELL_SIZE_FOR_INDEX)
+    self.listView_:registerScriptHandler(handler(self,self.tableCellAtIndex),cc.TABLECELL_SIZE_AT_INDEX)
+    self.listView_:reloadData()
 
 end
 
@@ -50,24 +52,22 @@ function ChooseLevelScene:scrollViewDidZoom(view)
 end
 
 function ChooseLevelScene:tableCellTouched(table,cell)
-    Newprint("cell touched at index: " .. cell:getIdx())
+    -- print("cell touched at index: ", cell:getIdx())
 end
 
 
-function ChooseLevelScene:cellSizeForTable(table,idx) 
-    return 750, 150  
+function ChooseLevelScene:cellSizeForTable(table,idx)
+    if idx == self.curSelectIndex_ then
+        return 966
+    else
+        return 150  
+    end
 end
 
 function ChooseLevelScene:tableCellAtIndex(table, idx)
-    print("tableCellAtIndex", idx)
     local cell = table:dequeueCell()
     if nil == cell then
         cell = cc.TableViewCell:new()
-    end
-
-    if cell["node"] then
-        cell["node"]:removeFromParent()
-        cell["node"] = nil
     end
 
     if cell["node"] == nil then
@@ -75,18 +75,48 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
         cell:addChild(cell["node"]) 
     end
 
-    cell["node"]:pos(display.cx, 50)
-    cell["node"]:showContentView(enLevelCellType.Close, nil, idx)
+    if idx == self.curSelectIndex_ then
+        cell["node"]:pos(display.width/2, 483)
+        cell["node"]:showContentView(enLevelCellType.Open, nil, idx)
+
+    elseif idx <= self.openCount_ then
+        cell["node"]:pos(display.width/2, 75)
+        cell["node"]:showContentView(enLevelCellType.Close, nil, idx)
+
+    else
+        cell["node"]:pos(display.width/2, 75)
+        cell["node"]:showContentView(enLevelCellType.Lock, nil, idx)        
+
+    end
 
     return cell
 end
 
 function ChooseLevelScene:numberOfCellsInTableView(table)
-  return 10
+    return 30
 end
 
 function ChooseLevelScene:cellCb(event)
+    print("cellCb", event.name, self.listView_:getContentOffset().y)
+    if event.name == "cellClicked" then
+        if event.cellType == enLevelCellType.Close then
+            self.curSelectIndex_ = event.idx
+            self.listView_:reloadData()
+            local off = self.listView_:getContentOffset()
+            off.y = 1034-150*(29-event.idx)-966
+            self.listView_:setContentOffset(off, false) 
+        elseif event.cellType == enLevelCellType.Open then
+            self.curSelectIndex_ = -1
+            local off = self.listView_:getContentOffset()
+            self.listView_:reloadData()
+            off.y = 1034-150*(30-event.idx)
+            self.listView_:setContentOffset(off, false) 
+        end
+    elseif event.name == "sure" then
+        app:enterScene("PlayLevelScene", nil, "flipy")
+    else
 
+    end
 end
 
 return ChooseLevelScene
