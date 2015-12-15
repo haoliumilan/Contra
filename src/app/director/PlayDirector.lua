@@ -108,9 +108,9 @@ function PlayDirector:onStart_(event)
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getPosByRowColIndex(i, j)
-			if i == 4 and (j == 1 or j == 3 or j == 5 or j == 7) then
+			if (i == 7 and j ~= 4) or (i == 4 and j == 4) then
 				oneStoneType = enStoneType.Iron
-			elseif i <= 3 then
+			elseif i <= 7 then
 				oneStoneType = enStoneType.Yellow
 			else
 				oneStoneType = self:getRandomStoneColor()
@@ -293,11 +293,12 @@ end
 
 -- 消除后，更新7x7矩阵, 有不会移动的珠子
 function PlayDirector:updateMatrix2()
-	local threeX = {0, 1, -1}
+	local isRunAction = false
 
-	local function getRunActionStone(index, rowIndex, colIndex)
+	-- 获得一个可以移动到当前位置的stone
+	local function getRunActionStone(index, rowIndex, colIndex, valueIndex)
 		local newRowIndex = rowIndex + 1
-		local newColIndex = colIndex + threeX[index]
+		local newColIndex = colIndex + valueIndex
 		if self:getIsInMatrix(newRowIndex, newColIndex) == false then
 			return nil
 		end
@@ -325,36 +326,48 @@ function PlayDirector:updateMatrix2()
 		return nil
 	end
 
-	local pos1X, pos1Y, pos2X, pos2Y
+	-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
+	local function stoneRunAction(rowIndex, colIndex)
+		local oneStone 
+		local threeX
+		-- 随机向左，或者向右
+		if math.random(1, 2) == 1 then
+			threeX = {0, 1, -1}
+		else
+			threeX = {0, -1, 1}
+		end
+		for k,v in ipairs(threeX) do
+			oneStone = getRunActionStone(k, rowIndex, colIndex, v)
+			if oneStone then
+				oneStone:setRowColIndex(rowIndex, colIndex)
+				self.stoneViews_[rowIndex][colIndex] = oneStone
+				self.stoneViews_[rowIndex+1][colIndex+v] = nil
+				self.stoneViews_[rowIndex][colIndex]:stop()
+				local pos1X, pos1Y = self:getPosByRowColIndex(rowIndex, colIndex)
+				self.stoneViews_[rowIndex][colIndex]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
+				isRunAction = true
+
+				-- 斜着掉下来的，同时正下方相邻的stone存在，说明不会再垂直下降了
+				if self:getIsInMatrix(rowIndex-1, colIndex) == true and self.stoneViews_[rowIndex-1][colIndex] then
+					oneStone:setIsVertical(false)
+				end
+
+				break
+			end
+		end
+	end
+
 	local oneStone
-	local isRunAction = false
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			pos1X, pos1Y = self:getPosByRowColIndex(i, j)
 			if oneStone == nil then
-			-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
 				if i < PlayDirector.SMaxRow then
-					for k,v in ipairs(threeX) do
-						oneStone = getRunActionStone(k, i, j)
-						if oneStone then
-							oneStone:setRowColIndex(i, j)
-							self.stoneViews_[i][j] = oneStone
-							self.stoneViews_[i+1][j+v] = nil
-							self.stoneViews_[i][j]:stop()
-							self.stoneViews_[i][j]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
-							isRunAction = true
-
-							if self:getIsInMatrix(i-1, j) == true and self.stoneViews_[i-1][j] then
-								oneStone:setIsVertical(false)
-							end
-
-							break
-						end
-					end
+					stoneRunAction(i, j)
 				else
 					-- 最上面一行了，创建新的吧
-					pos2X, pos2Y = self:getPosByRowColIndex(i+1, j)					
+					local pos1X, pos1Y = self:getPosByRowColIndex(i, j)
+					local pos2X, pos2Y = self:getPosByRowColIndex(i+1, j)					
 					oneStone = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
 						:addTo(self)
 						:pos(pos2X, pos2Y)					
@@ -362,7 +375,6 @@ function PlayDirector:updateMatrix2()
 					self.stoneViews_[i][j]:stop()
 					self.stoneViews_[i][j]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
 					isRunAction = true
-
 				end
 			else
 
@@ -374,11 +386,15 @@ function PlayDirector:updateMatrix2()
 		self:performWithDelay(function()
 			self:updateMatrix2()
 			end, PlayDirector.TimeDrop)
+	else
+		self.touchLayer:setTouchEnabled(true)	
 	end
 end
 
 -- 消除后，更新7x7矩阵
 function PlayDirector:updateMatrix()
+	self.touchLayer:setTouchEnabled(false)	
+
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
 	local tempIndex
@@ -433,6 +449,8 @@ function PlayDirector:updateMatrix()
 		self:performWithDelay(function()
 			self:updateMatrix2()
 		end, PlayDirector.TimeDrop)
+	else
+		self.touchLayer:setTouchEnabled(true)	
 	end
 end
 
