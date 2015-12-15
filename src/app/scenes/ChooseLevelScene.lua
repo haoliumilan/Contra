@@ -28,81 +28,65 @@ function ChooseLevelScene:ctor()
         :addTo(self, 1)
 
     -- listview
-    self.listView_ = cc.ui.UIListView.new {
-        -- bgColor = cc.c4b(200, 200, 200, 120),
-        -- bg = "sunset.png",
-        -- bgScale9 = true,
-        async = true, --异步加载
-        viewRect = cc.rect(0, 130, 750, 1074),
-        direction = cc.ui.UIScrollView.DIRECTION_VERTICAL,
-        -- scrollbarImgV = "bar.png"
-    }
-        :onTouch(handler(self, self.touchListener))
-        :addTo(self)
+    self.listView = cc.TableView:create(cc.size(750, 900))
+    self.listView:setDelegate()
+    self:addChild(self.listView)
+    self.listView:pos(display.cx, display.cy)
+    self.listView:setVerticalFillOrder(cc.TABLEVIEW_FILL_TOPDOWN)
 
-    self.listView_:setDelegate(handler(self, self.sourceDelegate))
-
-    self.listView_:reload()
+    self.listView:registerScriptHandler(handler(self,self.numberOfCellsInTableView),cc.NUMBER_OF_CELLS_IN_TABLEVIEW)  
+    self.listView:registerScriptHandler(handler(self,self.scrollViewDidScroll),cc.SCROLLVIEW_SCRIPT_SCROLL)
+    self.listView:registerScriptHandler(handler(self,self.scrollViewDidZoom),cc.SCROLLVIEW_SCRIPT_ZOOM)
+    self.listView:registerScriptHandler(handler(self,self.tableCellTouched),cc.TABLECELL_TOUCHED)
+    self.listView:registerScriptHandler(handler(self,self.cellSizeForTable),cc.TABLECELL_SIZE_FOR_INDEX)
+    self.listView:registerScriptHandler(handler(self,self.tableCellAtIndex),cc.TABLECELL_SIZE_AT_INDEX)
 
 end
 
-function ChooseLevelScene:sourceDelegate(listView, tag, idx)
-    if cc.ui.UIListView.COUNT_TAG == tag then
-        return 50
-    elseif cc.ui.UIListView.CELL_TAG == tag then
-        local item
-        local content
-
-        item = self.listView_:dequeueItem()
-        if not item then
-            item = self.listView_:newItem()
-            content = ChooseLevelCell.new(handler(self, self.cellCb))
-            item:addContent(content)
-        else
-            content = item:getContent()
-        end
-
-        if idx == self.curSelectIndex_ then
-            content:showContentView(enLevelCellType.Open, nil, idx)
-            item:setItemSize(750, 966)
-        elseif idx <= self.openCount_ then
-            content:showContentView(enLevelCellType.Close, nil, idx)
-            item:setItemSize(750, 150)
-        else
-            content:showContentView(enLevelCellType.Lock, nil, idx)
-            item:setItemSize(750, 150)
-        end
-
-        return item
-    else
-    end
+function ChooseLevelScene:scrollViewDidScroll(view)
 end
 
-function ChooseLevelScene:touchListener(event)
-    local listView = event.listView
-    if "clicked" == event.name then
-        print("async list view clicked idx:" .. event.itemPos)
+function ChooseLevelScene:scrollViewDidZoom(view)
+end
+
+function ChooseLevelScene:tableCellTouched(table,cell)
+    Newprint("cell touched at index: " .. cell:getIdx())
+end
+
+
+function ChooseLevelScene:cellSizeForTable(table,idx) 
+    return 750, 150  
+end
+
+function ChooseLevelScene:tableCellAtIndex(table, idx)
+    print("tableCellAtIndex", idx)
+    local cell = table:dequeueCell()
+    if nil == cell then
+        cell = cc.TableViewCell:new()
     end
+
+    if cell["node"] then
+        cell["node"]:removeFromParent()
+        cell["node"] = nil
+    end
+
+    if cell["node"] == nil then
+        cell["node"] = ChooseLevelCell.new(handler(self, self.cellCb))
+        cell:addChild(cell["node"]) 
+    end
+
+    cell["node"]:pos(display.cx, 50)
+    cell["node"]:showContentView(enLevelCellType.Close, nil, idx)
+
+    return cell
+end
+
+function ChooseLevelScene:numberOfCellsInTableView(table)
+  return 10
 end
 
 function ChooseLevelScene:cellCb(event)
-    if event.name == ChooseLevelCell.EventCellClicked then
-        if event.cellType == enLevelCellType.Close then
-            self.curSelectIndex_ = event.idx
-            self.listView_:reload()
 
-        elseif event.cellType == enLevelCellType.Open then
-            self.curSelectIndex_ = 0
-            self.listView_:reload()
-
-        elseif event.cellType == enLevelCellType.Lock then
-
-        end
-
-    elseif event.name == ChooseLevelCell.EventSure then
-        app:enterScene("PlayLevelScene")
-
-    end
 end
 
 return ChooseLevelScene

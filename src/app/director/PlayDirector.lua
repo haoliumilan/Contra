@@ -164,7 +164,6 @@ function PlayDirector:onClearStone_(event)
 		if v:getIsSkillEffect() == true then
 			table.removebyvalue(self.skillEffectStones_, v)
 		end
-
 		self.stoneViews_[rowIndex][colIndex] = nil
 		v:removeFromParent()
 		v = nil
@@ -364,7 +363,7 @@ function PlayDirector:updateMatrix3()
 		-- 最上面一行了，创建新的吧
 		local pos1X, pos1Y = self:getPosByRowColIndex(7, colIndex)
 		local pos2X, pos2Y = self:getPosByRowColIndex(8, colIndex)					
-		local oneStone = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
+		local oneStone = app:createView("StoneView", {rowIndex = 7, colIndex = colIndex, stoneType = self:getRandomStoneColor()})
 			:addTo(self)
 			:pos(pos2X, pos2Y)					
 		self.stoneViews_[7][colIndex] = oneStone
@@ -393,106 +392,6 @@ function PlayDirector:updateMatrix3()
 	if isRunAction == true then
 		self:performWithDelay(function()
 			self:updateMatrix3()
-			end, PlayDirector.TimeDrop)
-	else
-		self.touchLayer:setTouchEnabled(true)	
-	end
-end
-
--- 消除后，更新7x7矩阵, 有不会移动的珠子, 没有左右随机
-function PlayDirector:updateMatrix2()
-	local isRunAction = false
-
-	-- 获得一个可以移动到当前位置的stone
-	local function getRunActionStone(index, rowIndex, colIndex, valueIndex)
-		local newRowIndex = rowIndex + 1
-		local newColIndex = colIndex + valueIndex
-		if self:getIsInMatrix(newRowIndex, newColIndex) == false then
-			return nil
-		end
-
-		local oneStone = self.stoneViews_[newRowIndex][newColIndex]
-		if oneStone == nil or oneStone:getIsCanSelected() == false then
-			return nil
-		end
-
-		-- 正上方相邻的、可以移动的stone可以掉落
-		if index == 1 then 
-			return oneStone
-		end
-
-		-- 正上方相邻的是不可以移动的，斜上方相邻的、可以移动的stone可以掉落
-		if self.stoneViews_[newRowIndex][colIndex] and self.stoneViews_[newRowIndex][colIndex]:getIsCanSelected() == false then
-			return oneStone
-		end
-
-		-- 正上方相邻的是空的，斜上方相邻的、可以移动的，同时这个斜上方的stone的正下方不能是空的，可以掉落
-		if oneStone:getIsVertical() == false and self.stoneViews_[rowIndex][newColIndex] then
-			return oneStone
-		end
-
-		return nil
-	end
-
-	-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
-	local function stoneRunAction(rowIndex, colIndex)
-		local oneStone 
-		local threeX
-		-- 随机向左，或者向右
-		if math.random(1, 2) == 1 then
-			threeX = {0, 1, -1}
-		else
-			threeX = {0, -1, 1}
-		end
-		for k,v in ipairs(threeX) do
-			oneStone = getRunActionStone(k, rowIndex, colIndex, v)
-			if oneStone then
-				oneStone:setRowColIndex(rowIndex, colIndex)
-				self.stoneViews_[rowIndex][colIndex] = oneStone
-				self.stoneViews_[rowIndex+1][colIndex+v] = nil
-				self.stoneViews_[rowIndex][colIndex]:stop()
-				local pos1X, pos1Y = self:getPosByRowColIndex(rowIndex, colIndex)
-				self.stoneViews_[rowIndex][colIndex]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
-				isRunAction = true
-
-				-- 斜着掉下来的，同时正下方相邻的stone存在，说明不会再垂直下降了
-				if self:getIsInMatrix(rowIndex-1, colIndex) == true and self.stoneViews_[rowIndex-1][colIndex] then
-					oneStone:setIsVertical(false)
-				end
-
-				break
-			end
-		end
-	end
-
-	local oneStone
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone == nil then
-				if i < PlayDirector.SMaxRow then
-					stoneRunAction(i, j)
-				else
-					-- 最上面一行了，创建新的吧
-					local pos1X, pos1Y = self:getPosByRowColIndex(i, j)
-					local pos2X, pos2Y = self:getPosByRowColIndex(i+1, j)					
-					oneStone = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
-						:addTo(self)
-						:pos(pos2X, pos2Y)					
-					self.stoneViews_[i][j] = oneStone
-					self.stoneViews_[i][j]:stop()
-					self.stoneViews_[i][j]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
-					isRunAction = true
-				end
-			else
-
-			end
-		end
-	end
-
-	if isRunAction == true then
-		self:performWithDelay(function()
-			self:updateMatrix2()
 			end, PlayDirector.TimeDrop)
 	else
 		self.touchLayer:setTouchEnabled(true)	
@@ -541,6 +440,7 @@ function PlayDirector:updateMatrix()
 					oneStone = self.stoneViews_[i][j]
 				elseif oneStone:getIsCanSelected() == true then
 					oneStone:setRowColIndex(i, j)
+					oneStone:setIsVertical(true)
 					self.stoneViews_[i][j] = oneStone
 					self.stoneViews_[i+tempIndex][j] = nil
 				else
@@ -550,6 +450,8 @@ function PlayDirector:updateMatrix()
 				if oneStone and oneStone:getIsCanSelected() == true then
 					oneStone:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
 				end
+			else
+				oneStone:setIsVertical(true)
 			end
 		end
 	end
