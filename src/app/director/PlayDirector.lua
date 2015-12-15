@@ -45,6 +45,7 @@ function PlayDirector:ctor()
 	self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
 	self:initSkill()
+
 end
 
 -- state machine
@@ -107,9 +108,9 @@ function PlayDirector:onStart_(event)
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getPosByRowColIndex(i, j)
-			if i == 5 and j ~= 4 then
+			if i == 4 and (j == 1 or j == 3 or j == 5 or j == 7) then
 				oneStoneType = enStoneType.Iron
-			elseif i <= 4 then
+			elseif i <= 3 then
 				oneStoneType = enStoneType.Yellow
 			else
 				oneStoneType = self:getRandomStoneColor()
@@ -140,7 +141,7 @@ function PlayDirector:onSelectStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			if oneStone:getStoneState() == enStoneState.Normal then
+			if oneStone and oneStone:getStoneState() == enStoneState.Normal then
 				oneStone:setStoneState(enStoneState.Disable)
 			end
 		end
@@ -222,10 +223,12 @@ function PlayDirector:onSelectSkill_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			if oneStone:getColorType() ~= self.selectSkill_:getColorType() then
-				oneStone:setStoneState(enStoneState.Disable, true)
-			else
-				oneStone:setStoneState(enStoneState.Highlight, true)
+			if oneStone then
+				if oneStone:getColorType() ~= self.selectSkill_:getColorType() then
+					oneStone:setStoneState(enStoneState.Disable, true)
+				else
+					oneStone:setStoneState(enStoneState.Highlight, true)
+				end
 			end
 		end
 	end
@@ -247,7 +250,7 @@ function PlayDirector:onResetSkill_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			if oneStone:getStoneState() ~= enStoneState.Normal then
+			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
 				oneStone:setStoneState(enStoneState.Normal, true)
 			end
 		end
@@ -262,7 +265,9 @@ function PlayDirector:onUseSkill_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
-			oneStone:setSkillEffect(false)
+			if oneStone then
+				oneStone:setSkillEffect(false)
+			end
 		end
 	end
 
@@ -288,30 +293,62 @@ end
 
 -- 消除后，更新7x7矩阵, 有不会移动的珠子
 function PlayDirector:updateMatrix2()
+	local threeX = {0, 1, -1}
+
+	local function getRunActionStone(index, rowIndex, colIndex)
+		local newRowIndex = rowIndex + 1
+		local newColIndex = colIndex + threeX[index]
+		if self:getIsInMatrix(newRowIndex, newColIndex) == false then
+			return nil
+		end
+
+		local oneStone = self.stoneViews_[newRowIndex][newColIndex]
+		if oneStone == nil or oneStone:getIsCanSelected() == false then
+			return nil
+		end
+
+		-- 正上方相邻的、可以移动的stone可以掉落
+		if index == 1 then 
+			return oneStone
+		end
+
+		-- 正上方相邻的是不可以移动的，斜上方相邻的、可以移动的stone可以掉落
+		if self.stoneViews_[newRowIndex][colIndex] and self.stoneViews_[newRowIndex][colIndex]:getIsCanSelected() == false then
+			return oneStone
+		end
+
+		-- 正上方相邻的是空的，斜上方相邻的、可以移动的，同时这个斜上方的stone的正下方不能是空的，可以掉落
+		if oneStone:getIsVertical() == false and self.stoneViews_[rowIndex][newColIndex] then
+			return oneStone
+		end
+
+		return nil
+	end
+
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
-	local threeX = {0, 1, -1}
 	local isRunAction = false
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
+			pos1X, pos1Y = self:getPosByRowColIndex(i, j)
 			if oneStone == nil then
 			-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
-				pos1X, pos1Y = self:getPosByRowColIndex(i, j)
 				if i < PlayDirector.SMaxRow then
 					for k,v in ipairs(threeX) do
-						if j+v > 0 and j+v <= PlayDirector.SMaxCol then
-							oneStone = self.stoneViews_[i+1][j+v]
-						end
-						if k == 1 and oneStone == nil then
-							print("·updateMatrix2·", i, j, v)
-							break
-						end
-
-						if oneStone and oneStone:getIsCanSelected() == true then
+						oneStone = getRunActionStone(k, i, j)
+						if oneStone then
 							oneStone:setRowColIndex(i, j)
 							self.stoneViews_[i][j] = oneStone
 							self.stoneViews_[i+1][j+v] = nil
+							self.stoneViews_[i][j]:stop()
+							self.stoneViews_[i][j]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
+							isRunAction = true
+
+							if self:getIsInMatrix(i-1, j) == true and self.stoneViews_[i-1][j] then
+								oneStone:setIsVertical(false)
+							end
+
 							break
 						end
 					end
@@ -322,12 +359,13 @@ function PlayDirector:updateMatrix2()
 						:addTo(self)
 						:pos(pos2X, pos2Y)					
 					self.stoneViews_[i][j] = oneStone
-				end
-
-				if oneStone ~= nil and oneStone:getIsCanSelected() == true then
-					self.stoneViews_[i][j]:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
+					self.stoneViews_[i][j]:stop()
+					self.stoneViews_[i][j]:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
 					isRunAction = true
+
 				end
+			else
+
 			end
 		end
 	end
@@ -579,10 +617,10 @@ function PlayDirector:getRelateStones(centerStone)
 	local relateStones = {}
 	local rowIndex, colIndex = centerStone:getRowColIndex()
 	for i=1,#DirectionValueArr do
-		local xIndex = colIndex + DirectionValueArr[i][1]
-		local yIndex = rowIndex + DirectionValueArr[i][2]
-		if xIndex >= 1 and xIndex <= PlayDirector.SMaxCol and yIndex >= 1 and yIndex <= PlayDirector.SMaxRow then
-			table.insert(relateStones, self.stoneViews_[yIndex][xIndex])
+		local newRowIndex = rowIndex + DirectionValueArr[i][2]
+		local newColIndex = colIndex + DirectionValueArr[i][1]
+		if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+			table.insert(relateStones, self.stoneViews_[newRowIndex][newColIndex])
 		end
 	end
 
@@ -601,7 +639,7 @@ function PlayDirector:getCanLinkStones(startStone)
 			local newColIndex = colIndex + DirectionValueArr[i][1]
 			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
-			 	if relateStone:getColorType() == oneStone:getColorType() and canLinkStones[relateStone] ~= true then
+			 	if relateStone and relateStone:getColorType() == oneStone:getColorType() and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
 					findCanLinkStone(relateStone)
 				end

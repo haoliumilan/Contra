@@ -29,6 +29,7 @@ function StoneView:ctor(property)
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
     self.isSkillEffect_ = false
+    self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.skillEffectSp_ = nil
@@ -94,6 +95,14 @@ end
 
 function StoneView:getIsSkillEffect()
     return self.isSkillEffect_
+end
+
+function StoneView:getIsVertical()
+    return self.isVertical_    
+end
+
+function StoneView:setIsVertical(isVertical)
+    self.isVertical_ = isVertical
 end
 
 ----

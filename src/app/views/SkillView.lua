@@ -73,18 +73,25 @@ function SkillView:showSkillCount(isShow, isAutoHide)
     self.labelBg_:stopAllActions()
     self.isShowSkillCount_ = isShow
     if isShow then
-        self.labelBg_:moveTo(SkillView.TimeSkBgMove, 0, -60)
-        if isAutoHide then
-            self.labelBg_:performWithDelay(function()
-                self.isShowSkillCount_ = false
-                self.labelBg_:moveTo(SkillView.TimeSkBgMove, 0, 0)
-            end, SkillView.TimeSkBgDelay)
-        end
-
+        self.labelBg_:stop()
+        self.labelBg_:runAction(transition.sequence({
+                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, -60)),
+                cc.DelayTime:create(SkillView.TimeSkBgDelay),
+                cc.CallFunc:create(function()
+                    if isAutoHide then
+                        self.isShowSkillCount_ = false
+                        self.labelBg_:stop()
+                        self.labelBg_:moveTo(SkillView.TimeSkBgMove, 0, 0)
+                    end
+                    end)
+            }))
     else
-        self.labelBg_:performWithDelay(function()
-            self.labelBg_:moveTo(SkillView.TimeSkBgMove, 0, 0)
-        end, SkillView.TimeSkBgDelay)
+        self.labelBg_:stop()
+        self.labelBg_:pos(0, -60)
+        self.labelBg_:runAction(transition.sequence({
+                cc.DelayTime:create(SkillView.TimeSkBgDelay),
+                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 0))
+            }))        
     end
 end
 
