@@ -4,6 +4,7 @@
 -- 选择关卡界面
 
 local ChooseLevelCell = import("..views.ChooseLevelCell")
+local LevelCfg = import("..config.LevelCfg")
 
 local ChooseLevelScene = class("ChooseLevelScene", function()
     return display.newScene("ChooseLevelScene")
@@ -13,7 +14,7 @@ ChooseLevelScene.ImgBg = "level/bg.jpg"
 
 function ChooseLevelScene:ctor()
     self.curSelectIndex_ = -1 -- 当前选中的cell的index
-    self.openCount_ = 15 -- 当前开启的关卡的数量
+    self.openCount_ = 1 -- 当前开启的关卡的数量
 
     -- background
     display.newSprite(ChooseLevelScene.ImgBg, display.cx, display.cy)
@@ -79,7 +80,7 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
         cell["node"]:pos(display.width/2, 483)
         cell["node"]:showContentView(enLevelCellType.Open, nil, idx)
 
-    elseif idx <= self.openCount_ then
+    elseif idx < self.openCount_ then
         cell["node"]:pos(display.width/2, 75)
         cell["node"]:showContentView(enLevelCellType.Close, nil, idx)
 
@@ -93,7 +94,7 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
 end
 
 function ChooseLevelScene:numberOfCellsInTableView(table)
-    return 30
+    return LevelCfg.getLevelCount()
 end
 
 function ChooseLevelScene:cellCb(event)
@@ -103,17 +104,21 @@ function ChooseLevelScene:cellCb(event)
             self.curSelectIndex_ = event.idx
             self.listView_:reloadData()
             local off = self.listView_:getContentOffset()
-            off.y = 1034-150*(29-event.idx)-966
-            self.listView_:setContentOffset(off, false) 
+            if off.y == 0 then
+                off.y = 1034-150*(29-event.idx)-966
+                self.listView_:setContentOffset(off, false)
+            end 
         elseif event.cellType == enLevelCellType.Open then
             self.curSelectIndex_ = -1
             local off = self.listView_:getContentOffset()
             self.listView_:reloadData()
-            off.y = 1034-150*(30-event.idx)
-            self.listView_:setContentOffset(off, false) 
+            if off.y == 0 then
+                off.y = 1034-150*(30-event.idx)
+                self.listView_:setContentOffset(off, false) 
+            end
         end
     elseif event.name == "sure" then
-        app:enterScene("PlayLevelScene", nil, "flipy")
+        app:enterScene("PlayLevelScene", {levelId = event.idx+1}, "flipy")
     else
 
     end

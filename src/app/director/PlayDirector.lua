@@ -24,7 +24,12 @@ PlayDirector.SkOriPosY = 850
 PlayDirector.SkSpace = 25 -- 技能之间的间距
 PlayDirector.SkSide = 120 -- 技能的边长
 
-function PlayDirector:ctor()
+-- 定义事件
+PlayDirector.CHANGE_STEP_EVENT = "CHANGE_STEP_EVENT"
+PlayDirector.CLEAR_STONE_EVENT = "CLEAR_STONE_EVENT"
+
+function PlayDirector:ctor(levelData)
+	self.levelData_ = levelData
 	self.stoneViews_ = {} -- 7x7 stoneView
 	self.selectStones_ = {} -- 选中的stoneView
 	self.skillDatas_ = {} 	-- 技能
@@ -32,20 +37,35 @@ function PlayDirector:ctor()
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.skillEffectStones_ = {} -- 技能消除的stone
+	self.leftStep_ = self.levelData_.step -- 剩余回合数
+	self.clearStones_ = {} -- 消除的各种stone的数量
+
+	-- touchLayer 用于接收触摸事件
+	self.touchLayer_ = display.newLayer()
+	self:addChild(self.touchLayer_)
+
+	--  回调
+	cc(self):addComponent("components.behavior.EventProtocol"):exportMethods() 
+
+    -- 启用触摸
+	self.touchLayer_:setTouchEnabled(true)	
+	-- 添加触摸事件处理函数
+	self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
 
 	self:setStateMachine()
 
-	-- touchLayer 用于接收触摸事件
-	self.touchLayer = display.newLayer()
-	self:addChild(self.touchLayer)
-
-    -- 启用触摸
-	self.touchLayer:setTouchEnabled(true)	
-	-- 添加触摸事件处理函数
-	self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
-
 	self:initSkill()
 
+end
+
+-- property
+
+function PlayDirector:getStepCount()
+	return self.leftStep_
+end
+
+function PlayDirector:getClearStones()
+	return self.clearStones_
 end
 
 -- state machine
@@ -120,6 +140,8 @@ function PlayDirector:onStart_(event)
 				:pos(posX, posY)
 		end
 	end
+
+	self:newStep()
 end
 
 function PlayDirector:onSelectStone_(event)
@@ -182,8 +204,11 @@ function PlayDirector:onClearStone_(event)
 
 	for i=1,5 do
 		self.skillDatas_[i]:addCurCount(clearColors[i])
+		self.clearStones_[i] = self.clearStones_[i] or 0
+		self.clearStones_[i] = self.clearStones_[i] + clearColors[i]
 	end
 
+	self:dispatchEvent({name = PlayDirector.CLEAR_STONE_EVENT})
 	self.fsm__:doEvent("resetStone", true)
 end
 
@@ -394,13 +419,13 @@ function PlayDirector:updateMatrix3()
 			self:updateMatrix3()
 			end, PlayDirector.TimeDrop)
 	else
-		self.touchLayer:setTouchEnabled(true)	
+		self:newStep()
 	end
 end
 
 -- 消除后，更新7x7矩阵
 function PlayDirector:updateMatrix()
-	self.touchLayer:setTouchEnabled(false)	
+	self.touchLayer_:setTouchEnabled(false)	
 
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
@@ -460,7 +485,7 @@ function PlayDirector:updateMatrix()
 			self:updateMatrix3()
 		end, PlayDirector.TimeDrop)
 	else
-		self.touchLayer:setTouchEnabled(true)	
+		self:newStep()
 	end
 end
 
@@ -485,6 +510,7 @@ function PlayDirector:onTouch(event)
     	elseif state == "stoneSelect" then
     		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 2 then
 	    		-- 消除
+	    		self:useStepCount()
 	    		self.fsm__:doEvent("clearStone")
 	    	else
 	    		-- 取消选中
@@ -692,5 +718,48 @@ function PlayDirector:getRandomStoneColor()
 	return math.random(enStoneType.Red, enStoneType.Purple)
 end
 
+-- 回合数加一
+function PlayDirector:useStepCount()
+	self.leftStep_ = self.leftStep_ - 1
+	self:dispatchEvent({name = PlayDirector.CHANGE_STEP_EVENT})
+end
+
+-- 新的一回合
+function PlayDirector:newStep()
+	if self:checkResult() == true then
+	-- 关卡结束了
+		return
+	end
+
+	self.touchLayer_:setTouchEnabled(true)	
+
+end
+
+-- 检查结果，是否通关
+function PlayDirector:checkResult()
+	local allTargetOK = true
+	for i,v in ipairs(self.levelData_.target) do
+		local clearCount = self.clearStones_[v[1]] or 0
+		if clearCount < v[2] then
+			allTargetOK = false
+			break
+		end
+	end
+
+	if allTargetOK == true then
+	-- 目标已经达成
+		print("success")
+		return true
+	end
+
+	if self.leftStep_ <= 0 then
+	-- 回合数到了，关卡失败
+		print("fail")
+		return true
+	end
+
+	return false
+
+end
 
 return PlayDirector
