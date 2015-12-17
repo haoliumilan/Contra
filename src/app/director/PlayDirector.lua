@@ -27,6 +27,8 @@ PlayDirector.SkSide = 120 -- 技能的边长
 -- 定义事件
 PlayDirector.CHANGE_STEP_EVENT = "CHANGE_STEP_EVENT"
 PlayDirector.CLEAR_STONE_EVENT = "CLEAR_STONE_EVENT"
+PlayDirector.LEVEL_SUCCESS_EVENT = "LEVEL_SUCCESS_EVENT"
+PlayDirector.LEVEL_FAIL_EVENT = "LEVEL_FAIL_EVENT"
 
 function PlayDirector:ctor(levelData)
 	self.levelData_ = levelData
@@ -50,11 +52,11 @@ function PlayDirector:ctor(levelData)
     -- 启用触摸
 	self.touchLayer_:setTouchEnabled(true)	
 	-- 添加触摸事件处理函数
-	self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch))
+	self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch_))
 
-	self:setStateMachine()
+	self:setStateMachine_()
 
-	self:initSkill()
+	self:initSkill_()
 
 end
 
@@ -70,7 +72,7 @@ end
 
 -- state machine
 -- 设置状态机
-function PlayDirector:setStateMachine()
+function PlayDirector:setStateMachine_()
 	-- 因为PlayDirector在不同状态，所以这里为 PlayDirector 绑定了状态机组件
 	cc(self):addComponent("components.behavior.StateMachine")
 	-- 由于状态机仅供内部使用，所以不应该调用组件的 exportMethods() 方法，改为用内部属性保存状态机组件对象
@@ -127,21 +129,15 @@ function PlayDirector:onStart_(event)
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			posX, posY = self:getPosByRowColIndex(i, j)
-			if (i == 7 and j ~= 4)then
-				oneStoneType = enStoneType.Iron
-			elseif i <= 7 then
-				oneStoneType = enStoneType.Yellow
-			else
-				oneStoneType = self:getRandomStoneColor()
-			end
+			posX, posY = self:getPosByRowColIndex_(i, j)
+			oneStoneType = self:getRandomStoneColor_()
 			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType})
 				:addTo(self)
 				:pos(posX, posY)
 		end
 	end
 
-	self:newStep()
+	self:newStep_()
 end
 
 function PlayDirector:onSelectStone_(event)
@@ -149,13 +145,13 @@ function PlayDirector:onSelectStone_(event)
 	local selectStone = event.args[1]
 	self.skillViews_[selectStone:getColorType()]:showSkillCount(true)
 
-	self.selectStones_ = self:getCanLinkStones(selectStone)
+	self.selectStones_ = self:getCanLinkStones_(selectStone)
 	self.skillEffectStones_ = {}
 
 	for i,v in ipairs(self.selectStones_) do
 		v:setStoneState(enStoneState.Highlight)
 		if v:getSkillData() ~= nil then
-			self:showSkillEffect(v)
+			self:showSkillEffect_(v)
 		end
 	end
 
@@ -232,7 +228,7 @@ function PlayDirector:onResetStone_(event)
 
 	-- 如果消除了，就要更新Matrix
 	if event.args[1] then
-		self:updateMatrix()
+		self:updateMatrix_()
 	end
 end
 
@@ -299,12 +295,12 @@ function PlayDirector:onUseSkill_(event)
 	selectStone:setSkillData(self.selectSkill_)
 	self.curSkillStone_ = selectStone
 	self.skillEffectStones_ = {}
-	self:showSkillEffect(selectStone)
+	self:showSkillEffect_(selectStone)
 
 end
 
 -- 技能按钮
-function PlayDirector:initSkill()
+function PlayDirector:initSkill_()
 	local posX
 	for i=1,5 do
 		self.skillDatas_[i] = SkillData.new(i)
@@ -316,14 +312,14 @@ function PlayDirector:initSkill()
 end
 
 -- 消除后，更新7x7矩阵, 有不会移动的珠子，左右随机
-function PlayDirector:updateMatrix3()
+function PlayDirector:updateMatrix3_()
 	local isRunAction = false
 
 	-- 获得一个可以移动到的位置
 	local function getRunActionPos(index, rowIndex, colIndex, valueIndex)
 		local newRowIndex = rowIndex - 1
 		local newColIndex = colIndex + valueIndex
-		if self:getIsInMatrix(newRowIndex, newColIndex) == false then
+		if self:getIsInMatrix_(newRowIndex, newColIndex) == false then
 			return nil
 		end
 
@@ -369,7 +365,7 @@ function PlayDirector:updateMatrix3()
 				self.stoneViews_[rowIndex][colIndex] = nil
 				
 				oneStone:stop()
-				local pos1X, pos1Y = self:getPosByRowColIndex(newRowIndex, newColIndex)
+				local pos1X, pos1Y = self:getPosByRowColIndex_(newRowIndex, newColIndex)
 				oneStone:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
 				isRunAction = true
 
@@ -386,9 +382,9 @@ function PlayDirector:updateMatrix3()
 	-- 创建新的stone,在第8行
 	local function addNewStone(colIndex)
 		-- 最上面一行了，创建新的吧
-		local pos1X, pos1Y = self:getPosByRowColIndex(7, colIndex)
-		local pos2X, pos2Y = self:getPosByRowColIndex(8, colIndex)					
-		local oneStone = app:createView("StoneView", {rowIndex = 7, colIndex = colIndex, stoneType = self:getRandomStoneColor()})
+		local pos1X, pos1Y = self:getPosByRowColIndex_(7, colIndex)
+		local pos2X, pos2Y = self:getPosByRowColIndex_(8, colIndex)					
+		local oneStone = app:createView("StoneView", {rowIndex = 7, colIndex = colIndex, stoneType = self:getRandomStoneColor_()})
 			:addTo(self)
 			:pos(pos2X, pos2Y)					
 		self.stoneViews_[7][colIndex] = oneStone
@@ -416,15 +412,15 @@ function PlayDirector:updateMatrix3()
 
 	if isRunAction == true then
 		self:performWithDelay(function()
-			self:updateMatrix3()
+			self:updateMatrix3_()
 			end, PlayDirector.TimeDrop)
 	else
-		self:newStep()
+		self:newStep_()
 	end
 end
 
 -- 消除后，更新7x7矩阵
-function PlayDirector:updateMatrix()
+function PlayDirector:updateMatrix_()
 	self.touchLayer_:setTouchEnabled(false)	
 
 	local pos1X, pos1Y, pos2X, pos2Y
@@ -440,7 +436,7 @@ function PlayDirector:updateMatrix()
 			if oneStone == nil then
 			-- 去找它上面的，离他最近的那个stone
 				tempIndex = 0
-				pos1X, pos1Y = self:getPosByRowColIndex(i, j)
+				pos1X, pos1Y = self:getPosByRowColIndex_(i, j)
 
 				while oneStone == nil do
 					if i + tempIndex == PlayDirector.SMaxRow then
@@ -457,9 +453,9 @@ function PlayDirector:updateMatrix()
 					addStoneArr[j] = addStoneArr[j] + 1
 					tempIndex = tempIndex+addStoneArr[j]
 
-					pos2X, pos2Y = self:getPosByRowColIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
+					pos2X, pos2Y = self:getPosByRowColIndex_(PlayDirector.SMaxRow+addStoneArr[j], j)
 					
-					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor()})
+					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor_()})
 						:addTo(self)
 						:pos(pos2X, pos2Y)
 					oneStone = self.stoneViews_[i][j]
@@ -482,23 +478,23 @@ function PlayDirector:updateMatrix()
 	end
 	if isFixed == true then
 		self:performWithDelay(function()
-			self:updateMatrix3()
+			self:updateMatrix3_()
 		end, PlayDirector.TimeDrop)
 	else
-		self:newStep()
+		self:newStep_()
 	end
 end
 
 -- 触摸回调
-function PlayDirector:onTouch(event)
+function PlayDirector:onTouch_(event)
     -- event.name 是触摸事件的状态：began, moved, ended, cancelled
     -- event.x, event.y 是触摸点当前位置
     -- event.prevX, event.prevY 是触摸点之前的位置
     -- local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
     -- print(label)
 
-    local oneStone = self:getStoneByPos(event.x, event.y)
-    local oneSkill = self:getSkillByPos(event.x, event.y)
+    local oneStone = self:getStoneByPos_(event.x, event.y)
+    local oneSkill = self:getSkillByPos_(event.x, event.y)
     local state = self.fsm__:getState()
     if oneStone then
     	-- 选中了stone
@@ -510,7 +506,7 @@ function PlayDirector:onTouch(event)
     	elseif state == "stoneSelect" then
     		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 2 then
 	    		-- 消除
-	    		self:useStepCount()
+	    		self:useStepCount_()
 	    		self.fsm__:doEvent("clearStone")
 	    	else
 	    		-- 取消选中
@@ -562,7 +558,7 @@ function PlayDirector:onTouch(event)
 end
 
 -- 显示技能效果
-function PlayDirector:showSkillEffect(oneStone)
+function PlayDirector:showSkillEffect_(oneStone)
 	oneStone:setSkillEffect(true)
 	table.insert(self.skillEffectStones_, oneStone)
 
@@ -571,12 +567,12 @@ function PlayDirector:showSkillEffect(oneStone)
 		for j=1,effect do
 			newRowIndex = rowIndex + directionValue[2]*j
 			newColIndex = colIndex + directionValue[1]*j
-			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local effectStone = self.stoneViews_[newRowIndex][newColIndex]
 				if table.indexof(self.skillEffectStones_, effectStone) == false then
 					if effectStone:getSkillData() ~= nil then
 					-- 技能触发技能
-						self:showSkillEffect(effectStone)
+						self:showSkillEffect_(effectStone)
 					else
 						effectStone:setSkillEffect(true)
 						table.insert(self.skillEffectStones_, effectStone)
@@ -601,7 +597,7 @@ function PlayDirector:showSkillEffect(oneStone)
 end
 
 -- 通过坐标获取Stone
-function PlayDirector:getStoneByPos(posX, posY)
+function PlayDirector:getStoneByPos_(posX, posY)
 	local realSide = PlayDirector.SSide + PlayDirector.SSpace
 
 	if posX < PlayDirector.SOriPosX + PlayDirector.SSpace * 0.5
@@ -624,7 +620,7 @@ function PlayDirector:getStoneByPos(posX, posY)
 end
 
 -- 通过坐标获取Skill
-function PlayDirector:getSkillByPos(posX, posY)
+function PlayDirector:getSkillByPos_(posX, posY)
 	local realSide = PlayDirector.SkSide + PlayDirector.SkSpace
 
 	if posX < PlayDirector.SkOriPosX + PlayDirector.SkSpace * 0.5
@@ -644,7 +640,7 @@ function PlayDirector:getSkillByPos(posX, posY)
 end
 
 -- 判断两个stone是否相邻
-function PlayDirector:getIsRelate(stone1, stone2)
+function PlayDirector:getIsRelate_(stone1, stone2)
 	local rowIndex1, colIndex1 = stone1:getRowColIndex()
 	local rowIndex2, colIndex2 = stone2:getRowColIndex()
 	local temp1 = rowIndex1 - rowIndex2
@@ -658,7 +654,7 @@ function PlayDirector:getIsRelate(stone1, stone2)
 end
 
 -- 判断一组坐标是否在matrix中
-function PlayDirector:getIsInMatrix(rowIndex, colIndex)
+function PlayDirector:getIsInMatrix_(rowIndex, colIndex)
 	if rowIndex >= 1 and rowIndex <= PlayDirector.SMaxRow and colIndex >= 1 and colIndex <= PlayDirector.SMaxCol then
 		return true
 	else
@@ -673,7 +669,7 @@ function PlayDirector:getRelateStones(centerStone)
 	for i=1,#DirectionValueArr do
 		local newRowIndex = rowIndex + DirectionValueArr[i][2]
 		local newColIndex = colIndex + DirectionValueArr[i][1]
-		if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+		if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 			table.insert(relateStones, self.stoneViews_[newRowIndex][newColIndex])
 		end
 	end
@@ -682,7 +678,7 @@ function PlayDirector:getRelateStones(centerStone)
 end
 
 -- 获取一个stone可以连接的所有stone,
-function PlayDirector:getCanLinkStones(startStone)
+function PlayDirector:getCanLinkStones_(startStone)
 	local canLinkStones = {}
 	canLinkStones[startStone] = true
 
@@ -691,7 +687,7 @@ function PlayDirector:getCanLinkStones(startStone)
 		for i=1,#DirectionValueArr do
 			local newRowIndex = rowIndex + DirectionValueArr[i][2]
 			local newColIndex = colIndex + DirectionValueArr[i][1]
-			if self:getIsInMatrix(newRowIndex, newColIndex) == true then
+			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
 			 	if relateStone and relateStone:getColorType() == oneStone:getColorType() and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
@@ -707,26 +703,26 @@ function PlayDirector:getCanLinkStones(startStone)
 end
 
 -- 获取矩阵的一个珠子的坐标
-function PlayDirector:getPosByRowColIndex(rowIndex, colIndex)
+function PlayDirector:getPosByRowColIndex_(rowIndex, colIndex)
 	local posX = PlayDirector.SOriPosX + PlayDirector.SSpace * colIndex + PlayDirector.SSide * (colIndex - 0.5)
 	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 0.5)
 	return posX, posY
 end
 
 -- 获得一个随机颜色
-function PlayDirector:getRandomStoneColor()
+function PlayDirector:getRandomStoneColor_()
 	return math.random(enStoneType.Red, enStoneType.Purple)
 end
 
 -- 回合数加一
-function PlayDirector:useStepCount()
+function PlayDirector:useStepCount_()
 	self.leftStep_ = self.leftStep_ - 1
 	self:dispatchEvent({name = PlayDirector.CHANGE_STEP_EVENT})
 end
 
 -- 新的一回合
-function PlayDirector:newStep()
-	if self:checkResult() == true then
+function PlayDirector:newStep_()
+	if self:checkResult_() == true then
 	-- 关卡结束了
 		return
 	end
@@ -736,7 +732,7 @@ function PlayDirector:newStep()
 end
 
 -- 检查结果，是否通关
-function PlayDirector:checkResult()
+function PlayDirector:checkResult_()
 	local allTargetOK = true
 	for i,v in ipairs(self.levelData_.target) do
 		local clearCount = self.clearStones_[v[1]] or 0
@@ -748,18 +744,25 @@ function PlayDirector:checkResult()
 
 	if allTargetOK == true then
 	-- 目标已经达成
-		print("success")
+		cc.UserDefault:getInstance():setIntegerForKey("openCount", self.levelData_.id+1)
+		self:dispatchEvent({name = PlayDirector.LEVEL_SUCCESS_EVENT})
 		return true
 	end
 
 	if self.leftStep_ <= 0 then
 	-- 回合数到了，关卡失败
-		print("fail")
+		self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
 		return true
 	end
 
 	return false
 
+end
+
+-- 增加五回合，继续游戏
+function PlayDirector:addStepCount()
+	self.leftStep_ = self.leftStep_ + 5
+	self:newStep_()
 end
 
 return PlayDirector

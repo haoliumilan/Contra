@@ -14,7 +14,7 @@ ChooseLevelScene.ImgBg = "level/bg.jpg"
 
 function ChooseLevelScene:ctor()
     self.curSelectIndex_ = -1 -- 当前选中的cell的index
-    self.openCount_ = 1 -- 当前开启的关卡的数量
+    self.openCount_ = cc.UserDefault:getInstance():getIntegerForKey("openCount", 1) -- 当前开启的关卡的数量
 
     -- background
     display.newSprite(ChooseLevelScene.ImgBg, display.cx, display.cy)

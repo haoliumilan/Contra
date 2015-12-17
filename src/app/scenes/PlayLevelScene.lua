@@ -6,6 +6,8 @@
 local PlayDirector = import("..director.PlayDirector")
 local TargetView = import("..views.TargetView")
 local LevelCfg = import("..config.LevelCfg")
+local SuccessView = import("..views.SuccessView")
+local FailView = import("..views.FailView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -44,6 +46,8 @@ function PlayLevelScene:ctor(levelId)
     cc.EventProxy.new(self.playDirector_, self)
         :addEventListener(self.playDirector_.CHANGE_STEP_EVENT, handler(self, self.updateStepCount_))
         :addEventListener(self.playDirector_.CLEAR_STONE_EVENT, handler(self, self.updateTargetCount_))
+        :addEventListener(self.playDirector_.LEVEL_SUCCESS_EVENT, handler(self, self.levelSuccess_))
+        :addEventListener(self.playDirector_.LEVEL_FAIL_EVENT, handler(self, self.levelFail_))
 
     -- 剩余回合数
     local leftStep = self.playDirector_:getStepCount()
@@ -54,6 +58,10 @@ function PlayLevelScene:ctor(levelId)
     -- 关卡目标
     self.targetView_ = TargetView.new(self.levelData_.target)
         :addTo(self, 1)
+
+    self.successView_ = nil
+    self.failView_ = nil
+
 end
 
 --
@@ -68,5 +76,45 @@ function PlayLevelScene:updateTargetCount_()
     self.targetView_:udpateTargetCount(clearStones)
 end
 
+-- 
+function PlayLevelScene:levelSuccess_()
+    self.successView_ = SuccessView.new(handler(self, self.levelSuccessCb_))
+        :addTo(self, 1)
+end
+
+function PlayLevelScene:levelSuccessCb_(tag)
+    if tag == SuccessView.EventBack then
+    -- 回到选择关卡界面
+        app:enterScene("ChooseLevelScene", nil, "flipy")
+    elseif tag == SuccessView.EventNext then
+    -- 进入下一关，小心到了最后一关
+        local stepCount = LevelCfg.getLevelCount()
+        if self.levelData_.id == stepCount then
+            -- 这是最后一关，回到选择关卡界面
+            app:enterScene("ChooseLevelScene", nil, "flipy")
+        else
+            app:enterScene("PlayLevelScene", {levelId = self.levelData_.id+1}, "flipy")
+        end
+    end
+end
+
+-- 
+function PlayLevelScene:levelFail_()
+    self.failView_ = FailView.new(handler(self, self.levelFailCb_))
+        :addTo(self, 1)
+end
+
+function PlayLevelScene:levelFailCb_(tag)
+    if tag == FailView.EventAdd5 then
+    -- 增加5回合，继续游戏
+
+    elseif tag == FailView.EventAgain then
+    -- 重新游戏
+        app:enterScene("PlayLevelScene", {levelId = self.levelData_.id}, "flipy")
+    elseif tag == FailView.EventGiveUp then
+    -- 放弃游戏，回到选择关卡界面
+        app:enterScene("ChooseLevelScene", nil, "flipy")
+    end
+end
 
 return PlayLevelScene

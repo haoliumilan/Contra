@@ -12,7 +12,6 @@ function TargetView:ctor(data)
 	self.labels_ = {}
 
 	for i,v in ipairs(self.data_) do
-		print(i, v[1], v[2])
 		local iconName = string.format(ImageName.StoneNorml, v[1])
 		local iconSp = display.newSprite(iconName, 30, display.top-35-50*i)
 			:addTo(self)
