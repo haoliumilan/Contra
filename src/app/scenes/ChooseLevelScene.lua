@@ -100,7 +100,6 @@ function ChooseLevelScene:numberOfCellsInTableView(table)
 end
 
 function ChooseLevelScene:cellCb(event)
-    print("cellCb off.y", self.listView_:getContentOffset().y)
     if event.name == "cellClicked" then
         local levelCount = LevelCfg.getLevelCount()
         if event.cellType == enLevelCellType.Close then

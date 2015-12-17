@@ -115,10 +115,10 @@ function PlayLevelScene:levelFailCb_(tag)
         end
         self.playDirector_:addStepCount()
         self:updateStepCount_()
-        
+
     elseif tag == FailView.EventAgain then
     -- 重新游戏
-        app:enterScene("PlayLevelScene", {self.levelData_.id}, "flipy")
+        app:enterScene("PlayLevelScene", {checknumber(self.levelData_.id)}, "flipy")
     elseif tag == FailView.EventGiveUp then
     -- 放弃游戏，回到选择关卡界面
         app:enterScene("ChooseLevelScene", nil, "flipy")
@@ -134,7 +134,7 @@ end
 function PlayLevelScene:levelPauseCb_(tag)
     if tag == PauseView.EventAgain then
     -- 重新玩
-        app:enterScene("PlayLevelScene", {self.levelData_.id}, "flipy")
+        app:enterScene("PlayLevelScene", {checknumber(self.levelData_.id)}, "flipy")
 
     elseif tag == PauseView.EventGiveUp then
     -- 放弃，退出

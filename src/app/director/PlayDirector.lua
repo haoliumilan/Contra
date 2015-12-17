@@ -167,8 +167,23 @@ end
 
 function PlayDirector:onClearStone_(event)
 	local clearColors = {} -- 每种颜色消除的数量
-	for i=1,5 do
+	local splashStones = {} -- 被溅射到得stone
+	for i=1,enStoneType.Max-1 do
 		clearColors[i] = 0
+	end
+
+	local function findSplashStone(centerStone)
+		local rowIndex, colIndex = centerStone:getRowColIndex()
+		for i=1,#DirectionSplashArr do
+			local newRowIndex = rowIndex + DirectionSplashArr[i][2]
+			local newColIndex = colIndex + DirectionSplashArr[i][1]
+			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
+				local splashStone = self.stoneViews_[newRowIndex][newColIndex]
+			 	if splashStone and splashStone:getIsSkillEffect() == false and splashStone:getIsSplash() == true then
+			 		splashStones[splashStone] = true
+				end
+			end
+		end
 	end
 
 	local oneStone = nil
@@ -178,9 +193,20 @@ function PlayDirector:onClearStone_(event)
 			if oneStone and (oneStone:getStoneState() == enStoneState.Highlight 
 				or oneStone:getIsSkillEffect() == true) then
 				clearColors[oneStone:getColorType()] = clearColors[oneStone:getColorType()] + 1
+				findSplashStone(oneStone)
+
 				oneStone:removeFromParent()
 				self.stoneViews_[i][j] = nil
 			end
+		end
+	end
+
+	local splashArr = table.keys(splashStones)
+	for i,v in ipairs(splashArr) do
+		if v:splash() == true then
+			local rowIndex, colIndex = v:getRowColIndex()
+			v:removeFromParent()
+			self.stoneViews_[rowIndex][colIndex] = nil
 		end
 	end
 
@@ -542,7 +568,7 @@ function PlayDirector:showSkillEffect_(oneStone)
 			newColIndex = colIndex + directionValue[1]*j
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local effectStone = self.stoneViews_[newRowIndex][newColIndex]
-				if effectStone:getIsSkillEffect() == false then
+				if effectStone:getIsSkillEffect() == false and (effectStone:getIsCanSelected() == true or effectStone:getIsSplash() == true) then
 					if effectStone:getSkillData() ~= nil then
 					-- 技能触发技能
 						self:showSkillEffect_(effectStone)
@@ -689,6 +715,8 @@ function PlayDirector:getRandomStoneColor_()
 			enStoneType.Blue, 
 			enStoneType.Green, 
 			enStoneType.Purple,
+			enStoneType.WoodA1,
+			enStoneType.WoodB1,
 		}
 	local index = math.random(1, #targetStones)
 	return targetStones[index]

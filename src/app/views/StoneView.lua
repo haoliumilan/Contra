@@ -46,6 +46,25 @@ end
 
 ---- property
 
+function StoneView:getSplashTarget()
+    return self.stoneCfg_.splash_target
+end
+
+-- 如果溅射后直接消除，返回true
+function StoneView:splash()
+    self.stoneType_ = self.stoneCfg_.splash_target
+    if self.stoneType_ then
+        self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
+        return false
+    else
+        return true
+    end
+end
+
+function StoneView:getIsSplash()
+    return self.stoneCfg_.is_splash
+end
+
 function StoneView:getIsCanSelected()
     return self.stoneCfg_.is_selected
 end
