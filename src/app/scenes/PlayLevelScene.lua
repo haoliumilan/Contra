@@ -95,7 +95,7 @@ function PlayLevelScene:levelSuccessCb_(tag)
             -- 这是最后一关，回到选择关卡界面
             app:enterScene("ChooseLevelScene", nil, "flipy")
         else
-            app:enterScene("PlayLevelScene", {levelId = self.levelData_.id+1}, "flipy")
+            app:enterScene("PlayLevelScene", {self.levelData_.id+1}, "flipy")
         end
     end
 end
@@ -109,10 +109,16 @@ end
 function PlayLevelScene:levelFailCb_(tag)
     if tag == FailView.EventAdd5 then
     -- 增加5回合，继续游戏
+        if self.failView_ then
+            self.failView_:removeFromParent()
+            self.failView_ = nil
+        end
         self.playDirector_:addStepCount()
+        self:updateStepCount_()
+        
     elseif tag == FailView.EventAgain then
     -- 重新游戏
-        app:enterScene("PlayLevelScene", {levelId = self.levelData_.id}, "flipy")
+        app:enterScene("PlayLevelScene", {self.levelData_.id}, "flipy")
     elseif tag == FailView.EventGiveUp then
     -- 放弃游戏，回到选择关卡界面
         app:enterScene("ChooseLevelScene", nil, "flipy")
@@ -128,7 +134,7 @@ end
 function PlayLevelScene:levelPauseCb_(tag)
     if tag == PauseView.EventAgain then
     -- 重新玩
-        app:enterScene("PlayLevelScene", {levelId = self.levelData_.id}, "flipy")
+        app:enterScene("PlayLevelScene", {self.levelData_.id}, "flipy")
 
     elseif tag == PauseView.EventGiveUp then
     -- 放弃，退出

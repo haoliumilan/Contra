@@ -38,7 +38,6 @@ function PlayDirector:ctor(levelData)
 	self.skillViews_ = {} -- skillView
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
-	self.skillEffectStones_ = {} -- 技能消除的stone
 	self.leftStep_ = self.levelData_.step -- 剩余回合数
 	self.clearStones_ = {} -- 消除的各种stone的数量
 
@@ -146,7 +145,6 @@ function PlayDirector:onSelectStone_(event)
 	self.skillViews_[selectStone:getColorType()]:showSkillCount(true)
 
 	self.selectStones_ = self:getCanLinkStones_(selectStone)
-	self.skillEffectStones_ = {}
 
 	for i,v in ipairs(self.selectStones_) do
 		v:setStoneState(enStoneState.Highlight)
@@ -173,28 +171,16 @@ function PlayDirector:onClearStone_(event)
 		clearColors[i] = 0
 	end
 
-	-- 消除选中的珠子
-	local oneStone
-	local rowIndex, colIndex
-	for i,v in ipairs(self.selectStones_) do
-		clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
-		rowIndex, colIndex = v:getRowColIndex()
-		if v:getIsSkillEffect() == true then
-			table.removebyvalue(self.skillEffectStones_, v)
-		end
-		self.stoneViews_[rowIndex][colIndex] = nil
-		v:removeFromParent()
-		v = nil
-	end
-
-	-- 消除技能消除的珠子
-	for i,v in ipairs(self.skillEffectStones_) do
-		if v then
-			clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
-			rowIndex, colIndex = v:getRowColIndex()
-			self.stoneViews_[rowIndex][colIndex] = nil
-			v:removeFromParent()
-			v = nil
+	local oneStone = nil
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone and (oneStone:getStoneState() == enStoneState.Highlight 
+				or oneStone:getIsSkillEffect() == true) then
+				clearColors[oneStone:getColorType()] = clearColors[oneStone:getColorType()] + 1
+				oneStone:removeFromParent()
+				self.stoneViews_[i][j] = nil
+			end
 		end
 	end
 
@@ -211,7 +197,6 @@ end
 function PlayDirector:onResetStone_(event)
 	-- 重置所有stone
 	self.selectStones_ = {}
-	self.skillEffectStones_ = {}
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -260,7 +245,6 @@ function PlayDirector:onResetSkill_(event)
 		self.curSkillStone_:setSkillData(nil)
 	end
 	self.curSkillStone_ = nil
-	self.skillEffectStones_ = {}
 
 	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getColorType()]:getSkillState() == enSkillState.Using then
 		self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.CanUse)
@@ -282,19 +266,9 @@ function PlayDirector:onUseSkill_(event)
 		self.curSkillStone_:setSkillData(nil)
 	end
 
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneViews_[i][j]
-			if oneStone then
-				oneStone:setSkillEffect(false)
-			end
-		end
-	end
-
 	local selectStone = event.args[1]
 	selectStone:setSkillData(self.selectSkill_)
 	self.curSkillStone_ = selectStone
-	self.skillEffectStones_ = {}
 	self:showSkillEffect_(selectStone)
 
 end
@@ -560,7 +534,6 @@ end
 -- 显示技能效果
 function PlayDirector:showSkillEffect_(oneStone)
 	oneStone:setSkillEffect(true)
-	table.insert(self.skillEffectStones_, oneStone)
 
 	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 		local newRowIndex, newColIndex
@@ -569,13 +542,12 @@ function PlayDirector:showSkillEffect_(oneStone)
 			newColIndex = colIndex + directionValue[1]*j
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local effectStone = self.stoneViews_[newRowIndex][newColIndex]
-				if table.indexof(self.skillEffectStones_, effectStone) == false then
+				if effectStone:getIsSkillEffect() == false then
 					if effectStone:getSkillData() ~= nil then
 					-- 技能触发技能
 						self:showSkillEffect_(effectStone)
 					else
 						effectStone:setSkillEffect(true)
-						table.insert(self.skillEffectStones_, effectStone)
 					end
 				end
 			end
@@ -711,7 +683,15 @@ end
 
 -- 获得一个随机颜色
 function PlayDirector:getRandomStoneColor_()
-	return math.random(enStoneType.Red, enStoneType.Purple)
+	local targetStones = {
+			enStoneType.Red, 
+			enStoneType.Yellow, 
+			enStoneType.Blue, 
+			enStoneType.Green, 
+			enStoneType.Purple,
+		}
+	local index = math.random(1, #targetStones)
+	return targetStones[index]
 end
 
 -- 回合数加一

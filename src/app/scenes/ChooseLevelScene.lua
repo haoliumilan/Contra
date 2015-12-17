@@ -127,7 +127,7 @@ function ChooseLevelScene:cellCb(event)
             end
         end
     elseif event.name == "sure" then
-        app:enterScene("PlayLevelScene", {levelId = event.idx+1}, "flipy")
+        app:enterScene("PlayLevelScene", {event.idx+1}, "flipy")
     else
 
     end

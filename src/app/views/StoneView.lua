@@ -28,8 +28,10 @@ function StoneView:ctor(property)
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
-    self.isSkillEffect_ = false
-    self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的
+
+    self.isSkillEffect_ = false -- 使用技能消除的
+
+    self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的, 用于判断stone下落的标识
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.skillEffectSp_ = nil
