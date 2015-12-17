@@ -1,10 +1,10 @@
 --
--- Author: liuhao
+-- Author: Liu Hao
 -- Date: 2015-12-16 10:13:35
 -- 关卡失败
 
 local FailView = class("FailView", function()
-		return display.newLayer()
+		return display.newNode()
 	end)
 
 FailView.ImgTopBg = "settle/top.png" 

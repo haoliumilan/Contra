@@ -1,5 +1,5 @@
 --
--- Author: liuhao
+-- Author: Liu Hao
 -- Date: 2015-12-03 14:04:48
 -- 游戏中使用的全局变量
 

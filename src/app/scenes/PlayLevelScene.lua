@@ -1,5 +1,5 @@
 --
--- Author: liuhao
+-- Author: Liu Hao
 -- Date: 2015-12-03 12:10:35
 -- 游戏界面
 
@@ -8,6 +8,7 @@ local TargetView = import("..views.TargetView")
 local LevelCfg = import("..config.LevelCfg")
 local SuccessView = import("..views.SuccessView")
 local FailView = import("..views.FailView")
+local PauseView = import("..views.PauseView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -34,7 +35,7 @@ function PlayLevelScene:ctor(levelId)
             event.target:setScale(1.0)
         end)
         :onButtonClicked(function()
-            app:enterScene("ChooseLevelScene", nil, "flipy")
+            self:levelPause_()
         end)
         :pos(display.right - 55, display.top - 55)
         :addTo(self, 1)
@@ -61,6 +62,7 @@ function PlayLevelScene:ctor(levelId)
 
     self.successView_ = nil
     self.failView_ = nil
+    self.pauseView_ = nil
 
 end
 
@@ -107,7 +109,7 @@ end
 function PlayLevelScene:levelFailCb_(tag)
     if tag == FailView.EventAdd5 then
     -- 增加5回合，继续游戏
-
+        self.playDirector_:addStepCount()
     elseif tag == FailView.EventAgain then
     -- 重新游戏
         app:enterScene("PlayLevelScene", {levelId = self.levelData_.id}, "flipy")
@@ -117,4 +119,29 @@ function PlayLevelScene:levelFailCb_(tag)
     end
 end
 
+-- 
+function PlayLevelScene:levelPause_()
+    self.pauseView_ = PauseView.new(handler(self, self.levelPauseCb_))
+        :addTo(self, 1)
+end
+
+function PlayLevelScene:levelPauseCb_(tag)
+    if tag == PauseView.EventAgain then
+    -- 重新玩
+        app:enterScene("PlayLevelScene", {levelId = self.levelData_.id}, "flipy")
+
+    elseif tag == PauseView.EventGiveUp then
+    -- 放弃，退出
+        app:enterScene("ChooseLevelScene", nil, "flipy")
+
+    elseif tag == PauseView.EventBack then
+    -- 返回游戏
+        if self.pauseView_ then
+            self.pauseView_:removeFromParent()
+            self.pauseView_ = nil
+        end
+    end
+end
+
 return PlayLevelScene
+

@@ -1,5 +1,5 @@
 --
--- Author: liuhao
+-- Author: Liu Hao
 -- Date: 2015-12-14 16:57:17
 -- 珠子的配置
 

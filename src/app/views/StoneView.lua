@@ -1,5 +1,5 @@
 --
--- Author: liuhao
+-- Author: Liu Hao
 -- Date: 2015-12-03 18:28:24
 -- 珠子的视图
 
