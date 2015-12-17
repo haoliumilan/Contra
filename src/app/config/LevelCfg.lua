@@ -64,6 +64,24 @@ configArr[3] = {
 	picture = "pic_3"
 }
 
+-- configArr[4] = {}
+-- configArr[5] = {}
+-- configArr[6] = {}
+-- configArr[7] = {}
+-- configArr[8] = {}
+-- configArr[9] = {}
+-- configArr[10] = {}
+-- configArr[11] = {}
+-- configArr[12] = {}
+-- configArr[13] = {}
+-- configArr[14] = {}
+-- configArr[15] = {}
+-- configArr[16] = {}
+-- configArr[17] = {}
+-- configArr[18] = {}
+-- configArr[19] = {}
+-- configArr[20] = {}
+
 function LevelCfg.getLevelCount()
 	return #configArr
 end

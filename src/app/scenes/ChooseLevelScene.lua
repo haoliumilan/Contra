@@ -47,6 +47,7 @@ function ChooseLevelScene:ctor()
 end
 
 function ChooseLevelScene:scrollViewDidScroll(view)
+    print("cellCb off.y", self.listView_:getContentOffset().y)
 end
 
 function ChooseLevelScene:scrollViewDidZoom(view)
@@ -76,17 +77,18 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
         cell:addChild(cell["node"]) 
     end
 
+    local levelData = LevelCfg.get(idx+1)
     if idx == self.curSelectIndex_ then
         cell["node"]:pos(display.width/2, 483)
-        cell["node"]:showContentView(enLevelCellType.Open, nil, idx)
+        cell["node"]:showContentView(enLevelCellType.Open, levelData, idx)
 
     elseif idx < self.openCount_ then
         cell["node"]:pos(display.width/2, 75)
-        cell["node"]:showContentView(enLevelCellType.Close, nil, idx)
+        cell["node"]:showContentView(enLevelCellType.Close, levelData, idx)
 
     else
         cell["node"]:pos(display.width/2, 75)
-        cell["node"]:showContentView(enLevelCellType.Lock, nil, idx)        
+        cell["node"]:showContentView(enLevelCellType.Lock, levelData, idx)        
 
     end
 
@@ -98,23 +100,30 @@ function ChooseLevelScene:numberOfCellsInTableView(table)
 end
 
 function ChooseLevelScene:cellCb(event)
-    print("cellCb", event.name, self.listView_:getContentOffset().y)
+    print("cellCb off.y", self.listView_:getContentOffset().y)
     if event.name == "cellClicked" then
+        local levelCount = LevelCfg.getLevelCount()
         if event.cellType == enLevelCellType.Close then
             self.curSelectIndex_ = event.idx
             self.listView_:reloadData()
-            local off = self.listView_:getContentOffset()
-            if off.y == 0 then
-                off.y = 1034-150*(29-event.idx)-966
-                self.listView_:setContentOffset(off, false)
-            end 
+            local offY = 1034-150*(levelCount-1-event.idx)-966
+            if 150*(levelCount-1)+966 > 1034 then
+                if 150*(levelCount-1-event.idx)+966 < 1034 then
+                    offY = 0
+                end
+                self.listView_:setContentOffset(cc.p(0, offY), false) 
+            end
+            self.listView_:setContentOffset(cc.p(0, offY), false)
+
         elseif event.cellType == enLevelCellType.Open then
             self.curSelectIndex_ = -1
-            local off = self.listView_:getContentOffset()
             self.listView_:reloadData()
-            if off.y == 0 then
-                off.y = 1034-150*(30-event.idx)
-                self.listView_:setContentOffset(off, false) 
+            local offY = 1034-150*(levelCount-event.idx)
+            if 150*levelCount > 1034 then
+                if 150*(levelCount-event.idx) < 1034 then
+                    offY = 0
+                end
+                self.listView_:setContentOffset(cc.p(0, offY), false) 
             end
         end
     elseif event.name == "sure" then
