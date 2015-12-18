@@ -40,6 +40,7 @@ function StoneView:ctor(property)
 	    :addTo(self)
 
 	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
+    self.label_:setVisible(false)
 
     self:updateSprite_()
 end

@@ -9,6 +9,7 @@ local LevelCfg = import("..config.LevelCfg")
 local SuccessView = import("..views.SuccessView")
 local FailView = import("..views.FailView")
 local PauseView = import("..views.PauseView")
+local TipsView = import("..views.TipsView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -45,10 +46,11 @@ function PlayLevelScene:ctor(levelId)
 	    :addTo(self)
 
     cc.EventProxy.new(self.playDirector_, self)
-        :addEventListener(self.playDirector_.CHANGE_STEP_EVENT, handler(self, self.updateStepCount_))
-        :addEventListener(self.playDirector_.CLEAR_STONE_EVENT, handler(self, self.updateTargetCount_))
-        :addEventListener(self.playDirector_.LEVEL_SUCCESS_EVENT, handler(self, self.levelSuccess_))
-        :addEventListener(self.playDirector_.LEVEL_FAIL_EVENT, handler(self, self.levelFail_))
+        :addEventListener(self.playDirector_.CHANGE_STEP_EVENT, handler(self, self.playDirectorCb_))
+        :addEventListener(self.playDirector_.CLEAR_STONE_EVENT, handler(self, self.playDirectorCb_))
+        :addEventListener(self.playDirector_.LEVEL_SUCCESS_EVENT, handler(self, self.playDirectorCb_))
+        :addEventListener(self.playDirector_.LEVEL_FAIL_EVENT, handler(self, self.playDirectorCb_))
+        :addEventListener(self.playDirector_.TIPS_EVENT, handler(self, self.playDirectorCb_))
 
     -- 剩余回合数
     local leftStep = self.playDirector_:getStepCount()
@@ -58,6 +60,10 @@ function PlayLevelScene:ctor(levelId)
 
     -- 关卡目标
     self.targetView_ = TargetView.new(self.levelData_.target)
+        :addTo(self, 1)
+
+    -- 提示
+    self.tipsView_ = TipsView.new()
         :addTo(self, 1)
 
     self.successView_ = nil
@@ -146,6 +152,34 @@ function PlayLevelScene:levelPauseCb_(tag)
             self.pauseView_:removeFromParent()
             self.pauseView_ = nil
         end
+    end
+end
+
+function PlayLevelScene:showTips(tips)
+    self.tipsView_:showTips(tips)
+end
+
+function PlayLevelScene:playDirectorCb_(event)
+    dump(event)
+    if event.name == PlayDirector.CHANGE_STEP_EVENT then
+    -- 更新剩余回合数
+        self:updateStepCount_()
+
+    elseif event.name == PlayDirector.CLEAR_STONE_EVENT then
+    -- 更新关卡目标进度
+        self:updateTargetCount_()
+
+    elseif event.name == PlayDirector.LEVEL_SUCCESS_EVENT then
+    -- 胜利
+        self:levelSuccess_()
+
+    elseif event.name == PlayDirector.LEVEL_FAIL_EVENT then
+    -- 失败
+        self:levelFail_()
+
+    elseif event.name == PlayDirector.TIPS_EVENT then
+    -- 提示
+        self:showTips(event.tips)
     end
 end
 

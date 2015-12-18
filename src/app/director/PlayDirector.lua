@@ -6,6 +6,7 @@
 local StoneView = import("..views.StoneView")
 local SkillView = import("..views.SkillView")
 local SkillData = import("..data.SkillData")
+local TipsView = import("..views.TipsView")
 
 local PlayDirector = class("PlayDirector", function()
 	return display.newNode()
@@ -29,6 +30,7 @@ PlayDirector.CHANGE_STEP_EVENT = "CHANGE_STEP_EVENT"
 PlayDirector.CLEAR_STONE_EVENT = "CLEAR_STONE_EVENT"
 PlayDirector.LEVEL_SUCCESS_EVENT = "LEVEL_SUCCESS_EVENT"
 PlayDirector.LEVEL_FAIL_EVENT = "LEVEL_FAIL_EVENT"
+PlayDirector.TIPS_EVENT = "TIPS_EVENT"
 
 function PlayDirector:ctor(levelData)
 	self.levelData_ = levelData
@@ -112,7 +114,9 @@ function PlayDirector:setStateMachine_()
 	    callbacks = defaultCallbacks
 	})
 
-	self.fsm__:doEvent("start")
+	self:performWithDelay(function()
+		self.fsm__:doEvent("start")
+	end, 0.1)
 end
 
 function PlayDirector:onChangeState_(event)
@@ -121,6 +125,8 @@ function PlayDirector:onChangeState_(event)
 end
 
 function PlayDirector:onStart_(event)
+	self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtStart})
+
 	-- 初始化，随机7x7珠子
 	local oneStone = nil
 	local posX, posY
@@ -496,12 +502,23 @@ function PlayDirector:onTouch_(event)
     local oneStone = self:getStoneByPos_(event.x, event.y)
     local oneSkill = self:getSkillByPos_(event.x, event.y)
     local state = self.fsm__:getState()
+    if oneStone or oneSkill then
+    	self:dispatchEvent({name = PlayDirector.TIPS_EVENT})
+    end
+
     if oneStone then
     	-- 选中了stone
     	local stoneState = oneStone:getStoneState()
     	if state == "normal" then
     		if oneStone:getIsCanSelected() == true then
 	    		self.fsm__:doEvent("selectStone", oneStone)
+
+	    		if #self.selectStones_ > 2 then
+	    			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtAgainTouch})
+	    		else
+	    			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtLessThree})
+	    		end
+
 	    	end
     	elseif state == "stoneSelect" then
     		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 2 then
@@ -515,6 +532,7 @@ function PlayDirector:onTouch_(event)
 	    elseif state == "skillSelect" then
 	    	-- 使用技能
 	    	if stoneState == enStoneState.Highlight then
+	    		self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtSureSkill})
 	    		self.fsm__:doEvent("useSkill", oneStone)
 	    	else
 	    		self.fsm__:doEvent("resetSkill", false)
@@ -542,6 +560,7 @@ function PlayDirector:onTouch_(event)
     	-- 选中了skill
     	if state == "normal" or state == "skillSelect" or state == "skillUse" then
     		if oneSkill ~= self.selectSkill_ and oneSkill:getCurCount() >= oneSkill:getNeedCount() then
+    			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtUseSkill})
 	    		self.fsm__:doEvent("selectSkill", oneSkill)
 	    	else
 	    		self.skillViews_[oneSkill:getColorType()]:showSkillCount(true, true)
