@@ -135,8 +135,15 @@ function PlayDirector:onStart_(event)
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getPosByRowColIndex_(i, j)
-			oneStoneType = self:getRandomStoneColor_(1)
-			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType})
+			oneStoneType = self:getRandomStoneColor_()
+			local stoneIce = 0
+			if i == j then
+				stoneIce = 2
+				oneStoneType = enStoneType.WoodA
+			end
+
+			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType,
+				iceCount = stoneIce})
 				:addTo(self)
 				:pos(posX, posY)
 		end
@@ -713,7 +720,9 @@ function PlayDirector:getCanLinkStones_(startStone)
 			local newColIndex = colIndex + DirectionValueArr[i][1]
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
-			 	if relateStone and relateStone:getColorType() == oneStone:getColorType() and canLinkStones[relateStone] ~= true then
+			 	if relateStone and relateStone:getIsCanSelected() == true 
+			 		and relateStone:getColorType() == oneStone:getColorType() 
+			 		and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
 					findCanLinkStone(relateStone)
 				end

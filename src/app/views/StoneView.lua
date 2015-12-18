@@ -29,6 +29,7 @@ function StoneView:ctor(property)
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
     self.curHitCount_ = self.stoneCfg_.hit_count
+    self.curIceCount_ = property.iceCount or 0
     self.isSkillEffect_ = false -- 使用技能消除的
 
     self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的, 用于判断stone下落的标识
@@ -49,19 +50,29 @@ end
 
 -- 如果溅射后直接消除，返回true
 function StoneView:splash()
-    if self.curHitCount_ > 1 then
+    if self.curIceCount_ >= 1 then
+        self.curIceCount_ = self.curIceCount_ - 1
+        return false
+    elseif self.curHitCount_ > 1 then
         self.curHitCount_ = self.curHitCount_ - 1
         return false
     else
         return true
     end
+
 end
 
 function StoneView:getIsSplash()
+    if self.curIceCount_ > 0 then
+        return true
+    end
     return self.stoneCfg_.is_splash
 end
 
 function StoneView:getIsCanSelected()
+    if self.curIceCount_ > 0 then
+        return false
+    end
     return self.stoneCfg_.is_selected
 end
 
@@ -140,6 +151,7 @@ function StoneView:updateSprite_()
     if not texFile then return end
     self.sprite_:setTexture(texFile)
 
+    local size = self.sprite_:getContentSize()
     if self.stoneState_ == enStoneState.Disable then
         local filters = filter.newFilter("BRIGHTNESS", {-0.5})
         self.sprite_:setFilter(filters)
@@ -149,15 +161,23 @@ function StoneView:updateSprite_()
 
     if self.skillData_ then
         texFile = string.format(ImageName.SkillIcon, self.skillData_:getIconIndex())
-        local size = self.sprite_:getContentSize()
         display.newSprite(texFile, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
             :rotation(self.skillData_:getIconAngle())
     end
 
     if self.isSkillEffect_ == true then
-        local size = self.sprite_:getContentSize()
-        display.newSprite(StoneView.ImgSkillXuKuang, size.width/2.0, size.height/2.0)
+        display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
+            :addTo(self.sprite_)
+    end
+
+    if self.curIceCount_ > 0 then
+        if self.curIceCount_ == 2 then
+            texFile = ImageName.StoneIce
+        else
+            texFile = ImageName.StoneIce2
+        end
+        display.newSprite(texFile, size.width/2.0, size.height/2.0)
             :addTo(self.sprite_)
     end
 

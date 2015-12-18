@@ -134,6 +134,7 @@ function SkillView:updateSprite_()
     display.newSprite(texFile, size.width*0.5, size.height*0.5)
     	:addTo(self.sprite_)
     	:rotation(self.skillData_:getIconAngle())
+
 end
 
 return SkillView
