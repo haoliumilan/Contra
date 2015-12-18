@@ -160,7 +160,6 @@ function PlayLevelScene:showTips(tips)
 end
 
 function PlayLevelScene:playDirectorCb_(event)
-    dump(event)
     if event.name == PlayDirector.CHANGE_STEP_EVENT then
     -- 更新剩余回合数
         self:updateStepCount_()

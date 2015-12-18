@@ -35,7 +35,6 @@ end
 
 -- 
 function TipsView:showTips(tag)
-	print("TipsView:showTips", tag)
 	if tag == nil then
 		if self.label_:getString() ~= "" then
 			self.label_:stop()

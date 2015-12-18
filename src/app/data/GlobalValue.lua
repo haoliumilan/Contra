@@ -11,10 +11,8 @@ enStoneType = {
     "Green", -- 绿色珠子
     "Purple", -- 紫色珠子
     "Iron", -- 铁珠子、不能被消除、不能移动
-    "WoodA1", -- 木珠子、不能移动，会变成woodA2
-    "WoodA2", -- 木柱子、不能移动、可消除
-    "WoodB1", -- 木珠子、不能移动，会变成woodB2
-    "WoodB2", -- 木柱子、不能移动、可消除
+    "WoodA", -- 木珠子、不能移动，会被溅射
+    "WoodB", -- 木珠子、不能移动，会被溅射
     "Max"
 }
 enStoneType = EnumTable(enStoneType, 0)

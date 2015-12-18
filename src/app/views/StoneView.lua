@@ -28,7 +28,7 @@ function StoneView:ctor(property)
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
-
+    self.curHitCount_ = self.stoneCfg_.hit_count
     self.isSkillEffect_ = false -- 使用技能消除的
 
     self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的, 用于判断stone下落的标识
@@ -47,15 +47,10 @@ end
 
 ---- property
 
-function StoneView:getSplashTarget()
-    return self.stoneCfg_.splash_target
-end
-
 -- 如果溅射后直接消除，返回true
 function StoneView:splash()
-    self.stoneType_ = self.stoneCfg_.splash_target
-    if self.stoneType_ then
-        self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
+    if self.curHitCount_ > 1 then
+        self.curHitCount_ = self.curHitCount_ - 1
         return false
     else
         return true
@@ -132,12 +127,14 @@ end
 function StoneView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
-    if self.stoneState_ == enStoneState.Normal then
-        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
+    if self.stoneState_ == enStoneState.Normal or self.stoneState_ == enStoneState.Disable then
+        if self.curHitCount_ < self.stoneCfg_.hit_count then
+            texFile = string.format(ImageName.StoneNorml2, self.stoneType_, (self.stoneCfg_.hit_count+1-self.curHitCount_))
+        else
+            texFile = string.format(ImageName.StoneNorml, self.stoneType_)
+        end
     elseif self.stoneState_ == enStoneState.Highlight then
         texFile = string.format(ImageName.StoneHightlight, self.stoneType_)
-    elseif self.stoneState_ == enStoneState.Disable then
-        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
     end
 
     if not texFile then return end

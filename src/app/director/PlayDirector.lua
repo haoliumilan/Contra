@@ -135,7 +135,7 @@ function PlayDirector:onStart_(event)
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getPosByRowColIndex_(i, j)
-			oneStoneType = self:getRandomStoneColor_()
+			oneStoneType = self:getRandomStoneColor_(1)
 			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType})
 				:addTo(self)
 				:pos(posX, posY)
@@ -178,6 +178,7 @@ function PlayDirector:onClearStone_(event)
 		clearColors[i] = 0
 	end
 
+	-- 寻找溅射的
 	local function findSplashStone(centerStone)
 		local rowIndex, colIndex = centerStone:getRowColIndex()
 		for i=1,#DirectionSplashArr do
@@ -192,6 +193,7 @@ function PlayDirector:onClearStone_(event)
 		end
 	end
 
+	-- 消除选中的、技能波及的
 	local oneStone = nil
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
@@ -207,9 +209,11 @@ function PlayDirector:onClearStone_(event)
 		end
 	end
 
+	-- 消除溅射到的
 	local splashArr = table.keys(splashStones)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
+			clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
 			local rowIndex, colIndex = v:getRowColIndex()
 			v:removeFromParent()
 			self.stoneViews_[rowIndex][colIndex] = nil
@@ -218,6 +222,9 @@ function PlayDirector:onClearStone_(event)
 
 	for i=1,5 do
 		self.skillDatas_[i]:addCurCount(clearColors[i])
+	end
+
+	for i=1,enStoneType.Max-1 do
 		self.clearStones_[i] = self.clearStones_[i] or 0
 		self.clearStones_[i] = self.clearStones_[i] + clearColors[i]
 	end
@@ -727,16 +734,18 @@ function PlayDirector:getPosByRowColIndex_(rowIndex, colIndex)
 end
 
 -- 获得一个随机颜色
-function PlayDirector:getRandomStoneColor_()
+function PlayDirector:getRandomStoneColor_(tag)
 	local targetStones = {
 			enStoneType.Red, 
 			enStoneType.Yellow, 
 			enStoneType.Blue, 
 			enStoneType.Green, 
 			enStoneType.Purple,
-			enStoneType.WoodA1,
-			enStoneType.WoodB1,
 		}
+	if tag == 1 then
+		table.insert(targetStones, enStoneType.WoodA)
+		table.insert(targetStones, enStoneType.WoodB)
+	end
 	local index = math.random(1, #targetStones)
 	return targetStones[index]
 end
