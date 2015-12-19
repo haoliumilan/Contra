@@ -19,6 +19,7 @@ PlayDirector.SOriPosX = 34 -- 珠子矩阵最左坐标
 PlayDirector.SOriPosY = 40 
 PlayDirector.SSpace = 6 -- 珠子的间隔
 PlayDirector.SSide = 90 -- 珠子的边长
+
 PlayDirector.SkOriPosX = 0 -- 技能最左坐标
 PlayDirector.SkOriPosY = 850 
 PlayDirector.SkSpace = 25 -- 技能之间的间距
@@ -579,7 +580,7 @@ function PlayDirector:onTouch_(event)
     			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtUseSkill})
 	    		self.fsm__:doEvent("selectSkill", oneSkill)
 	    	else
-	    		self.skillViews_[oneSkill:getStoneType()]:showSkillCount(true, true)
+	    		self:showSkillCount_()
 	    	end
     	else
     		-- 取消选中
@@ -892,6 +893,17 @@ function PlayDirector:updateActiveStonePos_()
 		end, PlayDirector.TimeUpdatePos)
 
 	return true
+end
+
+-- 显示技能数量
+function PlayDirector:showSkillCount_()
+	local oneSkill = nil
+	for i=1,5 do
+		oneSkill = self.skillDatas_[i]
+		if oneSkill:getCurCount() < oneSkill:getNeedCount() then
+			self.skillViews_[i]:showSkillCount(true, true)
+		end
+	end
 end
 
 return PlayDirector

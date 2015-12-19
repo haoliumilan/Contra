@@ -34,17 +34,16 @@ function SkillView:ctor(property)
         :addTo(self, 1)
 		:scale(1.2)
 
-    self.labelBg_ = display.newScale9Sprite(ImageName.NineFrame1, 0, 0, cc.size(60, 60))
+    self.labelNode_ = display.newNode()
         :addTo(self)
 
-    -- self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(255, 255, 255)})
-    --     :align(display.CENTER)
-    --     :pos(30, 20)
-    --     :addTo(self.labelBg_)
+    self.labelBg_ = display.newScale9Sprite(ImageName.NineFrame1, 0, 0, cc.size(60, 60))
+        :addTo(self.labelNode_)
+        :rotation(180)
     
     self.label_ = display.newTTFLabel({size = 30, color = display.COLOR_White}) 
-        :pos(30, 20)
-        :addTo(self.labelBg_) 
+        :pos(0, 8)
+        :addTo(self.labelNode_) 
 
 
     self:updateSkillCount_()
@@ -70,25 +69,25 @@ function SkillView:showSkillCount(isShow, isAutoHide)
         return
     end
 
-    self.labelBg_:stopAllActions()
+    self.labelNode_:stopAllActions()
     self.isShowSkillCount_ = isShow
     if isShow then
-        self.labelBg_:stop()
-        self.labelBg_:runAction(transition.sequence({
-                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, -60)),
+        self.labelNode_:stop()
+        self.labelNode_:runAction(transition.sequence({
+                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 60)),
                 cc.DelayTime:create(SkillView.TimeSkBgDelay),
                 cc.CallFunc:create(function()
                     if isAutoHide then
                         self.isShowSkillCount_ = false
-                        self.labelBg_:stop()
-                        self.labelBg_:moveTo(SkillView.TimeSkBgMove, 0, 0)
+                        self.labelNode_:stop()
+                        self.labelNode_:moveTo(SkillView.TimeSkBgMove, 0, 0)
                     end
                     end)
             }))
     else
-        self.labelBg_:stop()
-        self.labelBg_:pos(0, -60)
-        self.labelBg_:runAction(transition.sequence({
+        self.labelNode_:stop()
+        self.labelNode_:pos(0, 60)
+        self.labelNode_:runAction(transition.sequence({
                 cc.DelayTime:create(SkillView.TimeSkBgDelay),
                 cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 0))
             }))        

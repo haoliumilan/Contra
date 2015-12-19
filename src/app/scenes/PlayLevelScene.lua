@@ -41,6 +41,10 @@ function PlayLevelScene:ctor(levelId)
         :pos(display.right - 55, display.top - 55)
         :addTo(self, 1)
 
+    -- 提示
+    self.tipsView_ = TipsView.new()
+        :addTo(self)
+
     -- 
     self.playDirector_ = PlayDirector.new(self.levelData_)
 	    :addTo(self)
@@ -60,10 +64,6 @@ function PlayLevelScene:ctor(levelId)
 
     -- 关卡目标
     self.targetView_ = TargetView.new(self.levelData_.target)
-        :addTo(self, 1)
-
-    -- 提示
-    self.tipsView_ = TipsView.new()
         :addTo(self, 1)
 
     self.successView_ = nil
