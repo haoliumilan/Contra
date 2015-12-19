@@ -34,16 +34,12 @@ function SkillView:ctor(property)
         :addTo(self, 1)
 		:scale(1.2)
 
-    self.labelNode_ = display.newNode()
+    self.labelBg_ = display.newScale9Sprite(ImageName.NineFrame1, 0, -20, cc.size(60, 60))
         :addTo(self)
-
-    self.labelBg_ = display.newScale9Sprite(ImageName.NineFrame1, 0, 0, cc.size(60, 60))
-        :addTo(self.labelNode_)
-        :rotation(180)
     
     self.label_ = display.newTTFLabel({size = 30, color = display.COLOR_White}) 
-        :pos(0, 8)
-        :addTo(self.labelNode_) 
+        :pos(30, 20)
+        :addTo(self.labelBg_) 
 
 
     self:updateSkillCount_()
@@ -69,25 +65,25 @@ function SkillView:showSkillCount(isShow, isAutoHide)
         return
     end
 
-    self.labelNode_:stopAllActions()
+    self.labelBg_:stopAllActions()
     self.isShowSkillCount_ = isShow
     if isShow then
-        self.labelNode_:stop()
-        self.labelNode_:runAction(transition.sequence({
-                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 60)),
+        self.sprite_:stop()
+        self.sprite_:runAction(transition.sequence({
+                cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 40)),
                 cc.DelayTime:create(SkillView.TimeSkBgDelay),
                 cc.CallFunc:create(function()
                     if isAutoHide then
                         self.isShowSkillCount_ = false
-                        self.labelNode_:stop()
-                        self.labelNode_:moveTo(SkillView.TimeSkBgMove, 0, 0)
+                        self.sprite_:stop()
+                        self.sprite_:moveTo(SkillView.TimeSkBgMove, 0, 0)
                     end
                     end)
             }))
     else
-        self.labelNode_:stop()
-        self.labelNode_:pos(0, 60)
-        self.labelNode_:runAction(transition.sequence({
+        self.sprite_:stop()
+        self.sprite_:pos(0, 40)
+        self.sprite_:runAction(transition.sequence({
                 cc.DelayTime:create(SkillView.TimeSkBgDelay),
                 cc.MoveTo:create(SkillView.TimeSkBgMove, cc.p(0, 0))
             }))        

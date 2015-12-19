@@ -53,10 +53,11 @@ function TipsView:showTips(tag)
 		self.label_:stop()
 		self.label_:performWithDelay(function()
 			self.label_:setString(tag)
-			self.label_:pos(display.left+90-400, display.cy+100)
+			self.label_:pos(display.left+90, display.cy+70)
 			self.label_:moveTo(TipsView.TimeMove, display.left+90, display.cy+100)
 			end, delay)
 	end
 end
 
 return TipsView
+

@@ -857,6 +857,7 @@ function PlayDirector:updateActiveStonePos_()
 	end
 	if allLessTwo == true then
 	-- 剩下的stone的数量都小于3，刷新也没有用
+	-- *********** 如果一有障碍的情况下，及时同一种类型的stone超过2个，也可能会不能消除，后面再处理这种情况吧
 		return false
 	end
 
