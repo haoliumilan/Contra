@@ -110,13 +110,13 @@ end
 function SkillView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
-    local colorType = self.skillData_:getColorType()
+    local stoneType = self.skillData_:getStoneType()
     if self.skillState_ == enSkillState.CanUse then
-        texFile = string.format(ImageName.StoneNorml, colorType)
+        texFile = string.format(ImageName.StoneNorml, stoneType)
     elseif self.skillState_ == enSkillState.Using then
-        texFile = string.format(ImageName.StoneHightlight, colorType)
+        texFile = string.format(ImageName.StoneHightlight, stoneType)
     elseif self.skillState_ == enSkillState.CanNotUse then
-        texFile = string.format(ImageName.StoneNorml, colorType)
+        texFile = string.format(ImageName.StoneNorml, stoneType)
     end
 
     if not texFile then return end

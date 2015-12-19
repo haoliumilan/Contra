@@ -93,7 +93,7 @@ function StoneView:setStoneType(stoneType)
     self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
 end
 
-function StoneView:getColorType()
+function StoneView:getStoneType()
     return self.stoneType_
 end
 

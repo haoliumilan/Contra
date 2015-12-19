@@ -11,7 +11,7 @@ local SkillData = class("SkillData", cc.mvc.ModelBase)
 
 -- 定义属性
 SkillData.schema = clone(cc.mvc.ModelBase.schema)
-SkillData.schema["colorType"] = {"number", 1} -- 颜色类型
+SkillData.schema["stoneType"] = {"number", 1} -- 颜色类型
 SkillData.schema["direction"] = {"table", {}} -- 方向
 SkillData.schema["effect"] = {"number", 0} -- 每个方向上影响的stone数量
 SkillData.schema["iconIndex"] = {"number", 1} -- icon名字
@@ -35,8 +35,8 @@ end
 
 ---- property
 
-function SkillData:getColorType()
-	return self.colorType_
+function SkillData:getStoneType()
+	return self.stoneType_
 end
 
 function SkillData:getEffect()

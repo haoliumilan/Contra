@@ -5,7 +5,7 @@
 
 --[[
 	id,
-	colorType, 颜色类型
+	stoneType, 颜色类型
 	direction, 方向类型
 	effect,  威力，每个方向影响珠子的数量
 	iconIndex, 技能icon的序数
@@ -18,23 +18,23 @@ local SkillCfg = {}
 local cofigArr = {}
 
 cofigArr[1] = {
-	colorType = 1, direction = {1}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 1, direction = {1}, effect = 2, iconIndex = 1, needCount = 30,
 }
 
 cofigArr[2] = {
-	colorType = 2, direction = {5}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 2, direction = {5}, effect = 2, iconIndex = 1, needCount = 30,
 }
 
 cofigArr[3] = {
-	colorType = 3, direction = {3}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 3, direction = {3}, effect = 2, iconIndex = 1, needCount = 30,
 }
 
 cofigArr[4] = {
-	colorType = 4, direction = {1, 5}, effect = 2, iconIndex = 2, needCount = 30,
+	stoneType = 4, direction = {1, 5}, effect = 2, iconIndex = 2, needCount = 30,
 }
 
 cofigArr[5] = {
-	colorType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 30,
+	stoneType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 30,
 }
 
 function SkillCfg.get(skillId)

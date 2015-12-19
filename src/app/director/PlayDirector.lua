@@ -19,11 +19,13 @@ PlayDirector.SOriPosX = 34 -- 珠子矩阵最左坐标
 PlayDirector.SOriPosY = 40 
 PlayDirector.SSpace = 6 -- 珠子的间隔
 PlayDirector.SSide = 90 -- 珠子的边长
-PlayDirector.TimeDrop = 0.1 -- 珠子掉落一个格子用的时间
 PlayDirector.SkOriPosX = 0 -- 技能最左坐标
 PlayDirector.SkOriPosY = 850 
 PlayDirector.SkSpace = 25 -- 技能之间的间距
 PlayDirector.SkSide = 120 -- 技能的边长
+
+PlayDirector.TimeDrop = 0.1 -- 珠子掉落一个格子用的时间
+PlayDirector.TimeUpdatePos = 0.2 -- stone刷新位置的时间
 
 -- 定义事件
 PlayDirector.CHANGE_STEP_EVENT = "CHANGE_STEP_EVENT"
@@ -137,7 +139,7 @@ function PlayDirector:onStart_(event)
 			posX, posY = self:getPosByRowColIndex_(i, j)
 			oneStoneType = self:getRandomStoneColor_()
 			local stoneIce = 0
-			if i == j then
+			if i <= 5 then
 				stoneIce = 2
 				oneStoneType = enStoneType.WoodA
 			end
@@ -155,7 +157,7 @@ end
 function PlayDirector:onSelectStone_(event)
 	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 	local selectStone = event.args[1]
-	self.skillViews_[selectStone:getColorType()]:showSkillCount(true)
+	self.skillViews_[selectStone:getStoneType()]:showSkillCount(true)
 
 	self.selectStones_ = self:getCanLinkStones_(selectStone)
 
@@ -207,7 +209,7 @@ function PlayDirector:onClearStone_(event)
 			oneStone = self.stoneViews_[i][j]
 			if oneStone and (oneStone:getStoneState() == enStoneState.Highlight 
 				or oneStone:getIsSkillEffect() == true) then
-				clearColors[oneStone:getColorType()] = clearColors[oneStone:getColorType()] + 1
+				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
 				findSplashStone(oneStone)
 
 				oneStone:removeFromParent()
@@ -220,7 +222,7 @@ function PlayDirector:onClearStone_(event)
 	local splashArr = table.keys(splashStones)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
-			clearColors[v:getColorType()] = clearColors[v:getColorType()] + 1
+			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
 			local rowIndex, colIndex = v:getRowColIndex()
 			v:removeFromParent()
 			self.stoneViews_[rowIndex][colIndex] = nil
@@ -265,17 +267,17 @@ end
 
 function PlayDirector:onSelectSkill_(event)
 	if self.selectSkill_ then
-		self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.CanUse)
+		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
 	end
 
 	self.selectSkill_ = event.args[1]
-	self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.Using)
+	self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.Using)
 
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
 			if oneStone then
-				if oneStone:getColorType() ~= self.selectSkill_:getColorType() then
+				if oneStone:getStoneType() ~= self.selectSkill_:getStoneType() then
 					oneStone:setStoneState(enStoneState.Disable, true)
 				else
 					oneStone:setStoneState(enStoneState.Highlight, true)
@@ -292,8 +294,8 @@ function PlayDirector:onResetSkill_(event)
 	end
 	self.curSkillStone_ = nil
 
-	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getColorType()]:getSkillState() == enSkillState.Using then
-		self.skillViews_[self.selectSkill_:getColorType()]:setSkillState(enSkillState.CanUse)
+	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getStoneType()]:getSkillState() == enSkillState.Using then
+		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
 	end
 	self.selectSkill_ = nil
 
@@ -577,7 +579,7 @@ function PlayDirector:onTouch_(event)
     			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtUseSkill})
 	    		self.fsm__:doEvent("selectSkill", oneSkill)
 	    	else
-	    		self.skillViews_[oneSkill:getColorType()]:showSkillCount(true, true)
+	    		self.skillViews_[oneSkill:getStoneType()]:showSkillCount(true, true)
 	    	end
     	else
     		-- 取消选中
@@ -693,23 +695,12 @@ function PlayDirector:getIsInMatrix_(rowIndex, colIndex)
 	end
 end
 
--- 获得一个stone所有相邻的stone
-function PlayDirector:getRelateStones(centerStone)
-	local relateStones = {}
-	local rowIndex, colIndex = centerStone:getRowColIndex()
-	for i=1,#DirectionValueArr do
-		local newRowIndex = rowIndex + DirectionValueArr[i][2]
-		local newColIndex = colIndex + DirectionValueArr[i][1]
-		if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
-			table.insert(relateStones, self.stoneViews_[newRowIndex][newColIndex])
-		end
-	end
-
-	return relateStones
-end
-
 -- 获取一个stone可以连接的所有stone,
 function PlayDirector:getCanLinkStones_(startStone)
+	if startStone == nil then
+		return {}
+	end
+
 	local canLinkStones = {}
 	canLinkStones[startStone] = true
 
@@ -721,7 +712,7 @@ function PlayDirector:getCanLinkStones_(startStone)
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
 			 	if relateStone and relateStone:getIsCanSelected() == true 
-			 		and relateStone:getColorType() == oneStone:getColorType() 
+			 		and relateStone:getStoneType() == oneStone:getStoneType() 
 			 		and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
 					findCanLinkStone(relateStone)
@@ -772,7 +763,14 @@ function PlayDirector:newStep_()
 		return
 	end
 
-	self.touchLayer_:setTouchEnabled(true)	
+	if self:checkIsCanClear_() == true then
+		self.touchLayer_:setTouchEnabled(true)	
+	else
+		-- 不能消除，重新排列
+		if self:updateActiveStonePos_() == false then
+			self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
+		end
+	end
 
 end
 
@@ -808,6 +806,92 @@ end
 function PlayDirector:addStepCount()
 	self.leftStep_ = self.leftStep_ + 5
 	self:newStep_()
+end
+
+-- 检查当前是否没有可以消除的stone
+function PlayDirector:checkIsCanClear_()
+	local oneStone = nil
+	local relateStones = nil
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			relateStones = self:getCanLinkStones_(oneStone)
+			if #relateStones > 2 then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+-- 刷新所有可以移动的stone，保证可以消除，如果肯定不能消除，那么关卡失败
+function PlayDirector:updateActiveStonePos_()
+	local stoneTypeArr = {} -- 不同类型的stone，如果没有超过3个的，说明刷新也不会带来消除
+	for i=1,enStoneType.Max-1 do
+		stoneTypeArr[i] = 0
+	end
+
+	local allActiveIndexArr = {} -- 所有可以移动的stone index
+	local allActiveStones = {} -- 所有可以移动的stone
+
+	local oneStone = nil
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone and oneStone:getIsCanSelected() == true then
+				table.insert(allActiveIndexArr, {i, j})
+				table.insert(allActiveStones, oneStone)
+				stoneTypeArr[oneStone:getStoneType()] = stoneTypeArr[oneStone:getStoneType()] + 1
+			end
+		end
+	end
+
+	local allLessTwo = true
+	for i,v in ipairs(stoneTypeArr) do
+		if v > 2 then
+			allLessTwo = false
+			break
+		end
+	end
+	if allLessTwo == true then
+	-- 剩下的stone的数量都小于3，刷新也没有用
+		return false
+	end
+
+	local function updateActiveStonePos2()
+		local newIndex, newRowIndex, newColIndex
+		local allActiveIndexArr2 = clone(allActiveIndexArr)
+		for i,v in ipairs(allActiveStones) do
+			newIndex = math.random(1, #allActiveIndexArr2)
+			newRowIndex = allActiveIndexArr2[newIndex][1]
+			newColIndex = allActiveIndexArr2[newIndex][2]
+
+			v:setRowColIndex(newRowIndex, newColIndex)
+			self.stoneViews_[newRowIndex][newColIndex] = v
+
+			table.remove(allActiveIndexArr2, newIndex)
+		end
+	end
+
+	updateActiveStonePos2()
+	while self:checkIsCanClear_() == false do
+		updateActiveStonePos2()
+	end
+
+	local newRowIndex, newColIndex, newPosX, newPosY
+	for i,v in ipairs(allActiveStones) do
+		newRowIndex, newColIndex = v:getRowColIndex()
+		newPosX, newPosY = self:getPosByRowColIndex_(newRowIndex, newColIndex)
+		v:stop()
+		v:moveTo(PlayDirector.TimeUpdatePos, newPosX, newPosY)
+	end
+
+	self:performWithDelay(function()
+		self.touchLayer_:setTouchEnabled(true)
+		end, PlayDirector.TimeUpdatePos)
+
+	return true
 end
 
 return PlayDirector
