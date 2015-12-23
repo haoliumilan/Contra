@@ -44,10 +44,18 @@ function PlayDirector:ctor(levelData)
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.curEffectStones_ = {} -- 当前技能波及的stone
-	self.leftStep_ = self.levelData_.step -- 剩余回合数
+	self.leftStep_ = 0 --self.levelData_.step -- 剩余回合数
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
 	self.wallXViews_ = {} -- stone之间的x轴墙
 	self.wallYViews_ = {} -- stone之间的y轴墙
+
+	-- 掉落stone类型容器
+	self.dropStoneArr_ = {}
+	for i,v in ipairs(self.levelData_.drop) do
+		for j=1,v do
+			table.insert(self.dropStoneArr_, i)
+		end
+	end
 
 	-- touchLayer 用于接收触摸事件
 	self.touchLayer_ = display.newLayer()
@@ -137,29 +145,29 @@ function PlayDirector:onStart_(event)
 	local oneStone = nil
 	local posX, posY
 	local oneStoneType
+	local stoneCfg = self.levelData_.stone
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
 			posX, posY = self:getStonePosByIndex_(i, j)
-			oneStoneType = self:getRandomStoneColor_()
-			local stoneIce = 0
-			oneStoneType = enStoneType.Red
-
-			self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = oneStoneType,
-				iceCount = stoneIce})
-				:addTo(self)
-				:pos(posX, posY)
+			if stoneCfg[i][j] and stoneCfg[i][j] > 0 then
+				self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = stoneCfg[i][j],
+					iceCount = 0})
+					:addTo(self)
+					:pos(posX, posY)
+			end
 		end
 	end
 
 	-- 墙 x轴
 	local oneWall = nil	
+	local wallXCfg = self.levelData_.wallX
 	for i=1,PlayDirector.SMaxRow+1 do
 		self.wallXViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			if i == 8 and j ~= 7 then
+			if wallXCfg[i][j] and wallXCfg[i][j] > 0 then
 				posX, posY = self:getWallXPosByIndex_(i, j)
-				self.wallXViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = enStoneType.IronWall})
+				self.wallXViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallXCfg[i][j]})
 					:addTo(self, 1)
 					:pos(posX, posY)
 			end
@@ -167,12 +175,13 @@ function PlayDirector:onStart_(event)
 	end
 
 	-- 墙 y轴
+	local wallYCfg = self.levelData_.wallY
 	for i=1,PlayDirector.SMaxRow do
 		self.wallYViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol+1 do
-			if j == 7 and i == 7 then
+			if wallYCfg[i][j] and wallYCfg[i][j] > 0 then
 				posX, posY = self:getWallYPosByIndex_(i, j)
-				self.wallYViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = enStoneType.IronWall})
+				self.wallYViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallYCfg[i][j]})
 					:addTo(self, 1)
 					:pos(posX, posY)
 					:rotation(90)
@@ -519,7 +528,7 @@ function PlayDirector:updateMatrix3_()
 	if isRunAction == true then
 		self:performWithDelay(function()
 			self:updateMatrix3_()
-			end, PlayDirector.TimeDrop+1.0)
+			end, PlayDirector.TimeDrop)
 	else
 		self:newStep_()
 	end
@@ -802,7 +811,13 @@ function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
 		end
 	else
 		-- 右上、右下、左上、左下
-		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil
+		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil 
+			and self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] ~= nil then
+			return false
+		elseif self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex+colValue] ~= nil 
+			and self.wallYViews_[rowIndex+rowValue][colIndex+math.max(0, colValue)] ~= nil then
+			return false
+		elseif self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil
 			and self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex+colValue] ~= nil then
 			return false
 		elseif self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] ~= nil
@@ -810,6 +825,7 @@ function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
 			return false
 		end
 	end
+
 	return true
 end
 
@@ -868,25 +884,14 @@ function PlayDirector:getWallYPosByIndex_(rowIndex, colIndex)
 end
 
 -- 获得一个随机颜色
-function PlayDirector:getRandomStoneColor_(tag)
-	local targetStones = {
-			enStoneType.Red, 
-			enStoneType.Yellow, 
-			enStoneType.Blue, 
-			enStoneType.Green, 
-			enStoneType.Purple,
-		}
-	if tag == 1 then
-		table.insert(targetStones, enStoneType.WoodA)
-		table.insert(targetStones, enStoneType.WoodB)
-	end
-	local index = math.random(1, #targetStones)
-	return targetStones[index]
+function PlayDirector:getRandomStoneColor_()
+	local index = math.random(1, #self.dropStoneArr_)
+	return self.dropStoneArr_[index]
 end
 
 -- 回合数加一
 function PlayDirector:useStepCount_()
-	self.leftStep_ = self.leftStep_ - 1
+	self.leftStep_ = self.leftStep_ + 1
 	self:dispatchEvent({name = PlayDirector.CHANGE_STEP_EVENT})
 end
 
@@ -926,11 +931,11 @@ function PlayDirector:checkResult_()
 		return true
 	end
 
-	if self.leftStep_ <= 0 then
-	-- 回合数到了，关卡失败
-		self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
-		return true
-	end
+	-- if self.leftStep_ <= 0 then
+	-- -- 回合数到了，关卡失败
+	-- 	self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
+	-- 	return true
+	-- end
 
 	return false
 
