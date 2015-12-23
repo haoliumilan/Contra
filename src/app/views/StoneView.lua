@@ -10,7 +10,6 @@ local StoneCfg = import("..config.StoneCfg")
 enStoneState = {
     "Normal",
     "Highlight",
-    "Skill",
     "Disable"
 }
 enStoneState = EnumTable(enStoneState, 0)
@@ -39,7 +38,6 @@ function StoneView:ctor(property)
     self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
 	    :align(display.CENTER)
 	    :addTo(self)
-
 	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
     self.label_:setVisible(false)
 
@@ -50,16 +48,20 @@ end
 
 -- 如果溅射后直接消除，返回true
 function StoneView:splash()
+    local isClear = true
     if self.curIceCount_ >= 1 then
         self.curIceCount_ = self.curIceCount_ - 1
-        return false
+        isClear = false
     elseif self.curHitCount_ > 1 then
         self.curHitCount_ = self.curHitCount_ - 1
-        return false
-    else
-        return true
+        isClear = false
     end
 
+    if isClear == false then
+        self:updateSprite_()
+    end
+
+    return isClear
 end
 
 function StoneView:getIsSplash()
@@ -69,7 +71,7 @@ function StoneView:getIsSplash()
     return self.stoneCfg_.is_splash
 end
 
-function StoneView:getIsCanSelected()
+function StoneView:getIsSelected()
     if self.curIceCount_ > 0 then
         return false
     end
@@ -159,6 +161,7 @@ function StoneView:updateSprite_()
         self.sprite_:clearFilter()
     end
 
+    -- 技能icon
     if self.skillData_ then
         texFile = string.format(ImageName.SkillIcon, self.skillData_:getIconIndex())
         display.newSprite(texFile, size.width*0.5, size.height*0.5)
@@ -166,11 +169,13 @@ function StoneView:updateSprite_()
             :rotation(self.skillData_:getIconAngle())
     end
 
+    --  技能波及
     if self.isSkillEffect_ == true then
         display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
     end
 
+    -- 冰块
     if self.curIceCount_ > 0 then
         if self.curIceCount_ == 2 then
             texFile = ImageName.StoneIce

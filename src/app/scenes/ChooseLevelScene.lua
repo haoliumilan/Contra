@@ -47,7 +47,7 @@ function ChooseLevelScene:ctor()
 end
 
 function ChooseLevelScene:scrollViewDidScroll(view)
-    print("cellCb off.y", self.listView_:getContentOffset().y)
+    -- print("cellCb off.y", self.listView_:getContentOffset().y)
 end
 
 function ChooseLevelScene:scrollViewDidZoom(view)
