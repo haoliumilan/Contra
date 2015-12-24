@@ -301,6 +301,7 @@ function PlayDirector:onClearStone_(event)
 
 	-- 消除选中的、技能波及的
 	local oneStone = nil
+	local oneCover = nil
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
@@ -310,6 +311,12 @@ function PlayDirector:onClearStone_(event)
 				findSplashStone(oneStone)
 
 				self:clearOne(self.stoneViews_, oneStone)
+			end
+
+			oneCover = self.coverViews_[i][j]
+			if oneCover and oneCover:getIsSkillEffect() == true then
+				clearColors[oneCover:getStoneType()] = clearColors[oneCover:getStoneType()] + 1
+				self:clearOne(self.coverViews_, oneCover)				
 			end
 		end
 	end
@@ -749,8 +756,7 @@ function PlayDirector:showSkillEffect_(oneStone)
 				-- 如果有cover，先弄cover
 				local effectCover = self.coverViews_[newRowIndex][newColIndex]
 				if effectCover then
-					if effectCover:getIsSkillEffect() == false and 
-						(effectCover:getIsSelect() == true or effectCover:getIsSplash() == true) then
+					if effectCover:getIsSkillEffect() == false and effectCover:getIsSplash() == true then
 						table.insert(self.curEffectStones_, effectCover)
 						effectCover:setSkillEffect(true)
 					end
