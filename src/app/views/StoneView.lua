@@ -22,16 +22,13 @@ StoneView.ImgSkillXuKuang = "skill/skill_xukuang.png"
 
 function StoneView:ctor(property)
     self.stoneState_ = property.stoneState or enStoneState.Normal
-    self.stoneType_ = property.stoneType or enStoneType.Red 
+    self.stoneType_ = property.stoneType or enStoneType.Red
     self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
     self.skillData_ = nil
     self.curHitCount_ = self.stoneCfg_.hit_count
-    self.curIceCount_ = property.iceCount or 0
     self.isSkillEffect_ = false -- 使用技能消除的
-
-    self.isVertical_ = property.isVertical or true -- 是否是垂直掉下来的, 用于判断stone下落的标识
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.skillEffectSp_ = nil
@@ -48,33 +45,20 @@ end
 
 -- 如果溅射后直接消除，返回true
 function StoneView:splash()
-    local isClear = true
-    if self.curIceCount_ >= 1 then
-        self.curIceCount_ = self.curIceCount_ - 1
-        isClear = false
-    elseif self.curHitCount_ > 1 then
+    if self.curHitCount_ > 1 then
         self.curHitCount_ = self.curHitCount_ - 1
-        isClear = false
-    end
-
-    if isClear == false then
         self:updateSprite_()
+        return false
+    else
+        return true
     end
-
-    return isClear
 end
 
 function StoneView:getIsSplash()
-    if self.curIceCount_ > 0 then
-        return true
-    end
     return self.stoneCfg_.is_splash
 end
 
 function StoneView:getIsSelected()
-    if self.curIceCount_ > 0 then
-        return false
-    end
     return self.stoneCfg_.is_selected
 end
 
@@ -127,14 +111,6 @@ function StoneView:getIsSkillEffect()
     return self.isSkillEffect_
 end
 
-function StoneView:getIsVertical()
-    return self.isVertical_    
-end
-
-function StoneView:setIsVertical(isVertical)
-    self.isVertical_ = isVertical
-end
-
 ----
 
 function StoneView:updateSprite_()
@@ -172,17 +148,6 @@ function StoneView:updateSprite_()
     --  技能波及
     if self.isSkillEffect_ == true then
         display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
-            :addTo(self.sprite_)
-    end
-
-    -- 冰块
-    if self.curIceCount_ > 0 then
-        if self.curIceCount_ == 2 then
-            texFile = ImageName.StoneIce
-        else
-            texFile = ImageName.StoneIce2
-        end
-        display.newSprite(texFile, size.width/2.0, size.height/2.0)
             :addTo(self.sprite_)
     end
 

@@ -17,8 +17,6 @@ ImageName = {
 	StoneNorml = "stone/stone_n_%d.png",
 	StoneNorml2 = "stone/stone_n_%d_%d.png",
 	StoneHightlight = "stone/stone_h_%d.png",
-	StoneIce = "stone/ice.png",
-	StoneIce2 = "stone/ice_2.png",
 
 	-- skill
 	SkillIcon = "skill/skill_%d.png",

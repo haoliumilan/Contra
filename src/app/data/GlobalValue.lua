@@ -15,6 +15,7 @@ enStoneType = {
     "WoodB", -- 木珠子、不能移动，会被溅射
     "IronWall", -- 铁墙、不能被消除、不能移动
     "WoodWall", -- 木墙、不能移动、会被溅射
+    "IceCover", -- 冰盖子、不能移动、会被溅射
     "Max"
 }
 enStoneType = EnumTable(enStoneType, 0)

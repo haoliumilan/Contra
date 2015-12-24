@@ -18,23 +18,23 @@ local SkillCfg = {}
 local cofigArr = {}
 
 cofigArr[1] = {
-	stoneType = 1, direction = {1}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 1, direction = {1}, effect = 2, iconIndex = 1, needCount = 25,
 }
 
 cofigArr[2] = {
-	stoneType = 2, direction = {5}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 2, direction = {5}, effect = 2, iconIndex = 1, needCount = 25,
 }
 
 cofigArr[3] = {
-	stoneType = 3, direction = {3}, effect = 2, iconIndex = 1, needCount = 30,
+	stoneType = 3, direction = {3}, effect = 2, iconIndex = 1, needCount = 25,
 }
 
 cofigArr[4] = {
-	stoneType = 4, direction = {1, 5}, effect = 2, iconIndex = 2, needCount = 30,
+	stoneType = 4, direction = {1, 5}, effect = 2, iconIndex = 2, needCount = 25,
 }
 
 cofigArr[5] = {
-	stoneType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 30,
+	stoneType = 5, direction = {3, 7}, effect = 2, iconIndex = 2, needCount = 25,
 }
 
 function SkillCfg.get(skillId)

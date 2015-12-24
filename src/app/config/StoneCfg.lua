@@ -54,6 +54,10 @@ configArr[10] = { -- 木墙
 	is_selected = false, is_splash = true, hit_count = 2	
 }
 
+configArr[11] = { -- 冰盖子
+	is_selected = false, is_splash = true, hit_count = 2	
+}
+
 function StoneCfg.get(stoneId)
     assert(stoneId >= 1 and stoneId <= #configArr, string.format("StoneCfg.get() - invalid stoneId %s", tostring(stoneId)))
     local oneStone = clone(configArr[stoneId])
