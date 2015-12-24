@@ -48,7 +48,7 @@ function SkillData:getDirection()
 end
 
 function SkillData:getIconIndex()
-	return self.iconIndex_
+	return #self.direction_
 end
 
 function SkillData:getIconAngle()

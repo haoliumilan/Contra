@@ -43,9 +43,10 @@ function PlayDirector:ctor(levelData)
 	self.wallYViews_ = {} -- stone之间的y轴墙 7x8
 	self.coverViews_ = {} -- stone上面的盖子 7x7
 
-	self.selectStones_ = {} -- 选中的stoneView
 	self.skillDatas_ = {} 	-- 技能
 	self.skillViews_ = {} -- skillView
+
+	self.selectStones_ = {} -- 选中的stoneView
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.curEffectStones_ = {} -- 当前技能波及的stone
@@ -440,7 +441,7 @@ end
 function PlayDirector:initSkill_()
 	local posX
 	for i=1,5 do
-		self.skillDatas_[i] = SkillData.new(i)
+		self.skillDatas_[i] = SkillData.new(self.levelData_.skill[i])
 		posX = PlayDirector.SkOriPosX + PlayDirector.SkSpace * i + PlayDirector.SkSide * (i - 0.5)
 		self.skillViews_[i] = app:createView("SkillView", {skillData = self.skillDatas_[i]})
 			:addTo(self)
