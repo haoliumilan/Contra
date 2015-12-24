@@ -26,7 +26,7 @@ function StoneView:ctor(property)
     self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
-    self.skillData_ = nil
+    self.skillData_ = property.skill or nil
     self.curHitCount_ = self.stoneCfg_.hit_count
     self.isSkillEffect_ = false -- 使用技能消除的
 

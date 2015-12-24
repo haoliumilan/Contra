@@ -147,15 +147,40 @@ function PlayDirector:onStart_(event)
 
 	-- 初始化，随机7x7珠子
 	local posX, posY
+	local stoneType
+	local coverType
+	local oneSkill 
 	local stoneCfg = self.levelData_.stone
 	for i=1,PlayDirector.SMaxRow do
 		self.stoneViews_[i] = {}
+		self.coverViews_[i] = {}
 		for j=1,PlayDirector.SMaxCol do
-			posX, posY = self:getStonePosByIndex_(i, j)
-			if stoneCfg[i][j] and stoneCfg[i][j] > 0 then
-				self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = stoneCfg[i][j]})
-					:addTo(self)
-					:pos(posX, posY)
+			if stoneCfg[i][j] then
+				stoneType = stoneCfg[i][j]
+				coverType = 0
+				oneSkill = nil
+				if type(stoneCfg[i][j]) == "table" then
+					stoneType = stoneCfg[i][j].s or 0
+					coverType = stoneCfg[i][j].c or 0
+					if stoneCfg[i][j].sk and stoneCfg[i][j].sk > 0 then
+						oneSkill = SkillData.new(stoneCfg[i][j].sk)
+					end
+				end
+
+				if coverType > 0 then
+					posX, posY = self:getStonePosByIndex_(i, j)
+					self.coverViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = coverType})
+						:addTo(self, 1)
+						:pos(posX, posY)
+				end
+
+				if stoneType > 0 then
+					posX, posY = self:getStonePosByIndex_(i, j)
+					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = stoneType,
+						skill = oneSkill})
+						:addTo(self)
+						:pos(posX, posY)
+				end
 			end
 		end
 	end
@@ -186,20 +211,6 @@ function PlayDirector:onStart_(event)
 					:addTo(self, 1)
 					:pos(posX, posY)
 					:rotation(90)
-			end
-		end
-	end
-
-	-- 盖子
-	local coverCfg = self.levelData_.cover
-	for i=1,PlayDirector.SMaxRow do
-		self.coverViews_[i] = {}
-		for j=1,PlayDirector.SMaxCol do
-			if coverCfg[i][j] and coverCfg[i][j] > 0 then
-				posX, posY = self:getStonePosByIndex_(i, j)
-				self.coverViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = coverCfg[i][j]})
-					:addTo(self, 1)
-					:pos(posX, posY)
 			end
 		end
 	end
