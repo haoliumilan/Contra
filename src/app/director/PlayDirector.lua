@@ -69,7 +69,7 @@ function PlayDirector:ctor(levelData)
 	cc(self):addComponent("components.behavior.EventProtocol"):exportMethods() 
 
     -- 启用触摸
-	self.touchLayer_:setTouchEnabled(true)	
+	self.touchLayer_:setTouchEnabled(false)	
 	-- 添加触摸事件处理函数
 	self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch_))
 
@@ -475,16 +475,13 @@ function PlayDirector:updateMatrix3_()
 	local function getRunActionPos(rowIndex, colIndex, valueIndex)
 		local newRowIndex = rowIndex - 1
 		local newColIndex = colIndex + valueIndex
+		-- 目标位置超出有效范围
 		if self:getIsInMatrix_(newRowIndex, newColIndex) == false then
 			return nil
 		end
 
-		if self.coverViews_[newRowIndex][newColIndex] then
-			return nil
-		end
-
-		local newStone = self.stoneViews_[newRowIndex][newColIndex]
-		if newStone ~= nil then
+		-- 目标位置有stone或者是冰块
+		if self.stoneViews_[newRowIndex][newColIndex] or self.coverViews_[newRowIndex][newColIndex] then
 			return nil
 		end
 
@@ -493,27 +490,12 @@ function PlayDirector:updateMatrix3_()
 			return nil
 		end
 
-		-- 正下方相邻的位置是空的，可以掉落
-		if valueIndex == 0 then 
-			return newRowIndex, newColIndex
+		if valueIndex ~= 0 and self:getIsSelectStone(self.stoneViews_[rowIndex][colIndex+valueIndex]) == true
+				and self.wallXViews_[rowIndex][colIndex+valueIndex] == nil then
+			return nil
 		end
 
-		-- 左右相邻的是不可以移动的stone
-		if self.stoneViews_[rowIndex][newColIndex] and self:getIsSelectStone(self.stoneViews_[rowIndex][newColIndex]) == false then
-			return newRowIndex, newColIndex
-		end
-
-		-- 有阻碍
-		if self.wallXViews_[rowIndex][colIndex+valueIndex] then
-			return newRowIndex, newColIndex
-		end
-
-		-- 相邻的是空的，斜上方相邻的、可以移动的，同时这个斜上方的stone的正下方不能是空的，可以掉落
-		if self.stoneViews_[rowIndex][newColIndex] == nil then
-			return newRowIndex, newColIndex
-		end
-
-		return nil
+		return newRowIndex, newColIndex
 	end
 
 	-- 去找它上面的，离他最近的那个stone, 如果碰到不能移动的珠子，那么就从两边移动
@@ -736,6 +718,10 @@ function PlayDirector:onTouch_(event)
 	    	self.fsm__:doEvent("resetStone")
 
     	end
+    else
+    	if state ~= "normal" then
+	    	self.fsm__:doEvent("resetStone")
+	    end
     end
 
     -- 返回 true 表示要响应该触摸事件，并继续接收该触摸事件的状态变化
@@ -762,7 +748,7 @@ function PlayDirector:showSkillEffect_(oneStone)
 					end
 				else
 					local effectStone = self.stoneViews_[newRowIndex][newColIndex]
-					if effectStone:getIsSkillEffect() == false and 
+					if effectStone and effectStone:getIsSkillEffect() == false and 
 						(self:getIsSelectStone(effectStone) == true or effectStone:getIsSplash() == true) then
 						if effectStone:getSkillData() ~= nil then
 						-- 技能触发技能
@@ -857,29 +843,24 @@ function PlayDirector:getIsInMatrix_(rowIndex, colIndex)
 	end
 end
 
--- 判断两个stone之间的wall是否阻止他们相连
+-- 判断两个stone之间的wall是否阻止他们相连, wall和不能移动的stone也可以阻止相连
 function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
 	if colValue == 0 then
-		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil then
+		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] then
 			return false
 		end
 	elseif rowValue == 0 then
-	   	if self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] ~= nil then
+	   	if self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] then
 			return false
 		end
 	else
 		-- 右上、右下、左上、左下
-		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil 
-			and self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] ~= nil then
-			return false
-		elseif self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex+colValue] ~= nil 
-			and self.wallYViews_[rowIndex+rowValue][colIndex+math.max(0, colValue)] ~= nil then
-			return false
-		elseif self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] ~= nil
-			and self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex+colValue] ~= nil then
-			return false
-		elseif self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] ~= nil
-			and self.wallYViews_[rowIndex+rowValue][colIndex+math.max(0, colValue)] ~= nil then
+		if (self:getIsSelectStone(self.stoneViews_[rowIndex+rowValue][colIndex]) == false
+			or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex]
+			or self.wallYViews_[rowIndex+rowValue][colIndex+math.max(colValue, 0)])
+			and (self:getIsSelectStone(self.stoneViews_[rowIndex][colIndex+colValue]) == false
+				or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex+colValue]
+				or self.wallYViews_[rowIndex][colIndex+math.max(colValue, 0)]) then
 			return false
 		end
 	end
@@ -984,7 +965,9 @@ function PlayDirector:checkResult_()
 
 	if allTargetOK == true then
 	-- 目标已经达成
-		cc.UserDefault:getInstance():setIntegerForKey("openCount", self.levelData_.id+1)
+		local openCount = cc.UserDefault:getInstance():getIntegerForKey("openCount", 1)
+		openCount = math.max(openCount, self.levelData_.id+1)
+		cc.UserDefault:getInstance():setIntegerForKey("openCount", openCount)
 		self:dispatchEvent({name = PlayDirector.LEVEL_SUCCESS_EVENT})
 		return true
 	end
@@ -1106,12 +1089,12 @@ end
 -- stone是否可以被选中
 function PlayDirector:getIsSelectStone(oneStone)
 	if oneStone == nil then
-		return false
+		return nil
 	end
 
 	local rowIndex, colIndex = oneStone:getRowColIndex()
 	if self.coverViews_[rowIndex][colIndex] then
-		return self.coverViews_[rowIndex][colIndex]:getIsSelected()
+		return false
 	end
 
 	return oneStone:getIsSelected()
