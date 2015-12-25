@@ -36,9 +36,9 @@ function StoneView:ctor(property)
 	    :align(display.CENTER)
 	    :addTo(self)
 	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
-    if self.stoneType_ > enStoneType.Purple then
+    -- if self.stoneType_ > enStoneType.Purple then
         self.label_:setVisible(false)
-    end
+    -- end
     
     self:updateSprite_()
 end

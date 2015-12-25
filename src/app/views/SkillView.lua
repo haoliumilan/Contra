@@ -40,7 +40,7 @@ function SkillView:ctor(property)
     self.label_ = display.newTTFLabel({size = 30, color = display.COLOR_White}) 
         :pos(30, 20)
         :addTo(self.labelBg_) 
-
+    
 
     self:updateSkillCount_()
 

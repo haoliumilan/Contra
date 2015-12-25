@@ -30,6 +30,7 @@ ChooseLevelCell.ImgArrowUp = "level/arrowUp.png"
 ChooseLevelCell.ImgArrowDown = "level/arrowDown.png"
 ChooseLevelCell.ImgSure = "level/sure.png"
 ChooseLevelCell.ImgImg = "image/image_%s.png"
+ChooseLevelCell.ImgSkillBg = "level/skillBg.jpg"
 
 function ChooseLevelCell:ctor(callback)
 	self.callback_ = callback
@@ -107,6 +108,9 @@ function ChooseLevelCell:showCloseView()
 end
 
 function ChooseLevelCell:showOpenView()
+	display.newSprite(ChooseLevelCell.ImgSkillBg, 0, -230)
+		:addTo(self)
+
 	local cellBg = display.newSprite(ChooseLevelCell.ImgCellOpenBg)
 		:addTo(self)
 
@@ -126,6 +130,11 @@ function ChooseLevelCell:showOpenView()
 	local image = display.newSprite(string.format(ChooseLevelCell.ImgImg, self.levelData_.id), -10, 290)
 			:addTo(self)
 
+	local detailLb = display.newTTFLabel({text = self.levelData_.detail, size = 25, color = display.COLOR_BLACK,
+		valign = cc.VERTICAL_TEXT_ALIGNMENT_TOP, align = cc.TEXT_ALIGNMENT_LEFT, dimensions = cc.size(500, 100)})	
+	        :pos(0, 105)
+	        :addTo(self)
+
 	-- 目标
 	app:createView("TargetView", {targetData = self.levelData_.target, targetType = 2, labelColor = cc.COLOR_BLACK})
 		:addTo(self)
@@ -136,7 +145,7 @@ function ChooseLevelCell:showOpenView()
 	local skillView = nil
 	for i=1,5 do
 		skillCfg = SkillCfg.get(skillArr[i])
-		skillView = display.newSprite(string.format(ImageName.StoneNorml, skillCfg.stoneType), -270+90*i, -230)
+		skillView = display.newSprite(string.format(ImageName.StoneNorml, skillCfg.stoneType), -285+95*i, -230)
 			:addTo(self)
 			:scale(0.7)
 
