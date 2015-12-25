@@ -35,6 +35,10 @@ end
 
 ---- property
 
+function SkillData:getSkillId()
+	return self.id_
+end
+
 function SkillData:getStoneType()
 	return self.stoneType_
 end

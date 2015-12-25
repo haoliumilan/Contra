@@ -4,12 +4,12 @@
 -- 游戏界面
 
 local PlayDirector = import("..director.PlayDirector")
-local TargetView = import("..views.TargetView")
 local LevelCfg = import("..config.LevelCfg")
+local TipsView = import("..views.TipsView")
+local PauseView = import("..views.PauseView")
 local SuccessView = import("..views.SuccessView")
 local FailView = import("..views.FailView")
-local PauseView = import("..views.PauseView")
-local TipsView = import("..views.TipsView")
+local TargetView = import("..views.TargetView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -63,7 +63,7 @@ function PlayLevelScene:ctor(levelId)
         :addTo(self, 1)
 
     -- 关卡目标
-    self.targetView_ = TargetView.new(self.levelData_.target)
+    self.targetView_ = app:createView("TargetView", {targetData = self.levelData_.target, targetType = 1})
         :addTo(self, 1)
 
     self.successView_ = nil
@@ -86,8 +86,12 @@ end
 
 -- 
 function PlayLevelScene:levelSuccess_()
-    self.successView_ = SuccessView.new(handler(self, self.levelSuccessCb_))
+    self.successView_ = app:createView("SuccessView", {levelData = self.levelData_, callback = handler(self, self.levelSuccessCb_)})
         :addTo(self, 1)
+
+    app:createView("SettleView", {settleData = self.playDirector_:getSettleData()})
+        :addTo(self.successView_)
+
 end
 
 function PlayLevelScene:levelSuccessCb_(tag)
@@ -96,7 +100,7 @@ function PlayLevelScene:levelSuccessCb_(tag)
         app:enterScene("ChooseLevelScene", nil, "flipy")
     elseif tag == SuccessView.EventNext then
     -- 进入下一关，小心到了最后一关
-        local stepCount = LevelCfg.getLevelCount()
+        local stepCount = LevelCfg.getCount()
         if self.levelData_.id == stepCount then
             -- 这是最后一关，回到选择关卡界面
             app:enterScene("ChooseLevelScene", nil, "flipy")
@@ -108,7 +112,7 @@ end
 
 -- 
 function PlayLevelScene:levelFail_()
-    self.failView_ = FailView.new(handler(self, self.levelFailCb_))
+    self.failView_ = app:createView("FailView", {levelData = self.levelData_, callback = handler(self, self.levelFailCb_)})
         :addTo(self, 1)
 end
 
@@ -133,7 +137,7 @@ end
 
 -- 
 function PlayLevelScene:levelPause_()
-    self.pauseView_ = PauseView.new(handler(self, self.levelPauseCb_))
+    self.pauseView_ = app:createView("PauseView", {levelData = self.levelData_, callback = handler(self, self.levelPauseCb_)})
         :addTo(self, 1)
 end
 

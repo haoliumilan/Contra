@@ -20,4 +20,14 @@ ImageName = {
 
 	-- skill
 	SkillIcon = "skill/skill_%d.png",
+
+	-- pic
+	Picture = "pic/pic_%d.jpg",
+
+	-- button
+	BtnAgain = "button/btn_again.png",
+	BtnGiveUp = "button/btn_giveUp.png",
+	BtnBack = "button/btn_back.png",
+	BtnNext = "button/btn_next.png",
+
 }

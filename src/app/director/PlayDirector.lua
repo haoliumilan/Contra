@@ -51,7 +51,9 @@ function PlayDirector:ctor(levelData)
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.curEffectStones_ = {} -- 当前技能波及的stone
 	self.leftStep_ = 0 --self.levelData_.step -- 剩余回合数
+
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
+	self.usedSkills_ = {} -- 使用的技能数量，用于统计
 
 	-- 掉落stone类型容器
 	self.dropStoneArr_ = {}
@@ -309,14 +311,17 @@ function PlayDirector:onClearStone_(event)
 				or oneStone:getIsSkillEffect() == true) then
 				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
 				findSplashStone(oneStone)
+				if oneStone:getSkillData() then
+  					self.usedSkills_[self.selectSkill_:getSkillId()] = self.usedSkills_[self.selectSkill_:getSkillId()] + 1
+				end
 
-				self:clearOne(self.stoneViews_, oneStone)
+				self:clearOne_(self.stoneViews_, oneStone)
 			end
 
 			oneCover = self.coverViews_[i][j]
 			if oneCover and oneCover:getIsSkillEffect() == true then
 				clearColors[oneCover:getStoneType()] = clearColors[oneCover:getStoneType()] + 1
-				self:clearOne(self.coverViews_, oneCover)				
+				self:clearOne_(self.coverViews_, oneCover)				
 			end
 		end
 	end
@@ -326,7 +331,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne(self.stoneViews_, v)
+			self:clearOne_(self.stoneViews_, v)
 		end
 	end
 
@@ -335,7 +340,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne(self.coverViews_, v)
+			self:clearOne_(self.coverViews_, v)
 		end
 	end
 
@@ -344,7 +349,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne(self.wallXViews_, v)
+			self:clearOne_(self.wallXViews_, v)
 		end
 	end
 
@@ -353,7 +358,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne(self.wallYViews_, v)
+			self:clearOne_(self.wallYViews_, v)
 		end
 	end
 
@@ -490,7 +495,7 @@ function PlayDirector:updateMatrix3_()
 			return nil
 		end
 
-		if valueIndex ~= 0 and self:getIsSelectStone(self.stoneViews_[rowIndex][colIndex+valueIndex]) == true
+		if valueIndex ~= 0 and self:getIsSelectStone_(self.stoneViews_[rowIndex][colIndex+valueIndex]) == true
 				and self.wallXViews_[rowIndex][colIndex+valueIndex] == nil then
 			return nil
 		end
@@ -550,7 +555,7 @@ function PlayDirector:updateMatrix3_()
 				end
 			else
 				oneStone = self.stoneViews_[i][j]
-			 	if self:getIsSelectStone(oneStone) == true then
+			 	if self:getIsSelectStone_(oneStone) == true then
 		 			stoneRunAction(i, j)
 			 	end
 			end 
@@ -615,7 +620,7 @@ function PlayDirector:updateMatrix_()
 						:addTo(self)
 						:pos(pos2X, pos2Y)
 					oneStone = self.stoneViews_[i][j]
-				elseif self:getIsSelectStone(oneStone) == true then
+				elseif self:getIsSelectStone_(oneStone) == true then
 					oneStone:setRowColIndex(i, j)
 					self.stoneViews_[i][j] = oneStone
 					self.stoneViews_[i+tempIndex][j] = nil
@@ -623,7 +628,7 @@ function PlayDirector:updateMatrix_()
 					isFixed = true
 				end
 
-				if self:getIsSelectStone(oneStone) == true then
+				if self:getIsSelectStone_(oneStone) == true then
 					oneStone:runAction(cc.MoveTo:create(PlayDirector.TimeDrop, cc.p(pos1X, pos1Y)))
 				end
 			end
@@ -658,7 +663,7 @@ function PlayDirector:onTouch_(event)
     	-- 选中了stone
     	local stoneState = oneStone:getStoneState()
     	if state == "normal" then
-    		if self:getIsSelectStone(oneStone) == true then
+    		if self:getIsSelectStone_(oneStone) == true then
 	    		self.fsm__:doEvent("selectStone", oneStone)
 
 	    		if #self.selectStones_ > 2 then
@@ -749,7 +754,7 @@ function PlayDirector:showSkillEffect_(oneStone)
 				else
 					local effectStone = self.stoneViews_[newRowIndex][newColIndex]
 					if effectStone and effectStone:getIsSkillEffect() == false and 
-						(self:getIsSelectStone(effectStone) == true or effectStone:getIsSplash() == true) then
+						(self:getIsSelectStone_(effectStone) == true or effectStone:getIsSplash() == true) then
 						if effectStone:getSkillData() ~= nil then
 						-- 技能触发技能
 							self:showSkillEffect_(effectStone)
@@ -855,10 +860,10 @@ function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
 		end
 	else
 		-- 右上、右下、左上、左下
-		if (self:getIsSelectStone(self.stoneViews_[rowIndex+rowValue][colIndex]) == false
+		if (self:getIsSelectStone_(self.stoneViews_[rowIndex+rowValue][colIndex]) == false
 			or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex]
 			or self.wallYViews_[rowIndex+rowValue][colIndex+math.max(colValue, 0)])
-			and (self:getIsSelectStone(self.stoneViews_[rowIndex][colIndex+colValue]) == false
+			and (self:getIsSelectStone_(self.stoneViews_[rowIndex][colIndex+colValue]) == false
 				or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex+colValue]
 				or self.wallYViews_[rowIndex][colIndex+math.max(colValue, 0)]) then
 			return false
@@ -886,7 +891,7 @@ function PlayDirector:getCanLinkStones_(startStone)
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true 
 				and self:getIsLinkByWall(rowIndex, colIndex, DirectionValueArr[i][2], DirectionValueArr[i][1]) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
-			 	if self:getIsSelectStone(relateStone) == true 
+			 	if self:getIsSelectStone_(relateStone) == true 
 			 		and relateStone:getStoneType() == oneStone:getStoneType() 
 			 		and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
@@ -1019,7 +1024,7 @@ function PlayDirector:updateActiveStonePos_()
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			if self:getIsSelectStone(oneStone) == true then
+			if self:getIsSelectStone_(oneStone) == true then
 				table.insert(allActiveIndexArr, {i, j})
 				table.insert(allActiveStones, oneStone)
 				stoneTypeArr[oneStone:getStoneType()] = stoneTypeArr[oneStone:getStoneType()] + 1
@@ -1087,7 +1092,7 @@ function PlayDirector:showSkillCount_()
 end
 
 -- stone是否可以被选中
-function PlayDirector:getIsSelectStone(oneStone)
+function PlayDirector:getIsSelectStone_(oneStone)
 	if oneStone == nil then
 		return nil
 	end
@@ -1101,12 +1106,17 @@ function PlayDirector:getIsSelectStone(oneStone)
 end
 
 -- 消除一个stone、wall、cover
-function PlayDirector:clearOne(table, oneValue)
+function PlayDirector:clearOne_(table, oneValue)
 	if oneValue then
 		local rowIndex, colIndex = oneValue:getRowColIndex()
 		oneValue:removeFromParent()
 		table[rowIndex][colIndex] = nil
 	end
+end
+
+-- 获取统计数据
+function PlayDirector:getSettleData()
+	return {stone = self.clearStones_, skill = self.usedSkills_, step = self.leftStep_}
 end
 
 return PlayDirector

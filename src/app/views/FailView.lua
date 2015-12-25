@@ -10,14 +10,14 @@ local FailView = class("FailView", function()
 FailView.ImgTopBg = "settle/top.png" 
 FailView.ImgFailBg = "settle/failBg.png"
 FailView.ImgAdd5Btn = "settle/add5Btn.png"
-FailView.ImgAgainBtn = "settle/againBtn.png"
-FailView.ImgGiveUpBtn = "settle/giveUpBtn.png"
 
 FailView.EventAdd5 = "add5"
 FailView.EventAgain = "again"
 FailView.EventGiveUp = "giveUp"
 
-function FailView:ctor(callback)
+function FailView:ctor(property)
+	self.callback_ = property.callback
+
 	-- background color
 	display.newColorLayer(cc.c4b(0, 0, 0, 200))
 		:addTo(self)
@@ -39,13 +39,13 @@ function FailView:ctor(callback)
 	        event.target:setScale(1.0)
 	    end)
 	    :onButtonClicked(function()
-	    	callback(FailView.EventAdd5)
+	    	self.callback_(FailView.EventAdd5)
 	    end)
 	    :pos(display.cx, 385)
 	    :addTo(self)
 
 	-- again btn
-	cc.ui.UIPushButton.new(FailView.ImgAgainBtn)
+	cc.ui.UIPushButton.new(ImageName.BtnAgain)
 	    :onButtonPressed(function(event)
 	        event.target:setScale(1.1)
 	    end)
@@ -53,13 +53,13 @@ function FailView:ctor(callback)
 	        event.target:setScale(1.0)
 	    end)
 	    :onButtonClicked(function()	
-	    	callback(FailView.EventAgain)
+	    	self.callback_(FailView.EventAgain)
 	    end)
 	    :pos(display.cx, 270)
 	    :addTo(self)
 
 	-- give up btn
-	cc.ui.UIPushButton.new(FailView.ImgGiveUpBtn)
+	cc.ui.UIPushButton.new(ImageName.BtnGiveUp)
 	    :onButtonPressed(function(event)
 	        event.target:setScale(1.1)
 	    end)
@@ -67,7 +67,7 @@ function FailView:ctor(callback)
 	        event.target:setScale(1.0)
 	    end)
 	    :onButtonClicked(function()
-	    	callback(FailView.EventGiveUp)
+	    	self.callback_(FailView.EventGiveUp)
 	    end)
 	    :pos(display.cx, 155)
 	    :addTo(self)

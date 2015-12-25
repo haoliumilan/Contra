@@ -9,17 +9,16 @@ local PauseView = class("PauseLayer", function()
 
 -- image
 PauseView.ImgBg = "pause/bg.png"
-PauseView.ImgAgainBtn = "pause/againBtn.png"
-PauseView.ImgGiveUpBtn = "pause/giveUpBtn.png"
-PauseView.ImgBackBtn = "pause/backBtn.png"
-PauseView.ImgCloseBtn = "pause/closeBtn.png"
 
 -- event
 PauseView.EventAgain = "again"
 PauseView.EventGiveUp = "giveUp"
 PauseView.EventBack = "back"
 
-function PauseView:ctor(callback)
+function PauseView:ctor(property)
+	self.callback_ = property.callback
+	self.levelData_ = property.levelData
+
 	-- background color
 	display.newColorLayer(cc.c4b(0, 0, 0, 200))
 		:addTo(self)
@@ -27,8 +26,19 @@ function PauseView:ctor(callback)
 	display.newSprite(PauseView.ImgBg, display.cx, display.cy)
 		:addTo(self)
 
+	-- name
+	display.newTTFLabel({text = string.format("%s.%s", self.levelData_.id, self.levelData_.name),
+	        size = 40, color = display.COLOR_WHITE})    
+	        :pos(display.cx, 1080)
+	        :addTo(self)
+
+	-- target
+	app:createView("TargetView", {targetData = self.levelData_.target, targetType = 2})
+		:pos(display.cx, 640)
+		:addTo(self)
+
 	-- again
-	cc.ui.UIPushButton.new(PauseView.ImgAgainBtn)
+	cc.ui.UIPushButton.new(ImageName.BtnAgain)
 	    :onButtonPressed(function(event)
 	        event.target:setScale(1.1)
 	    end)
@@ -36,41 +46,13 @@ function PauseView:ctor(callback)
 	        event.target:setScale(1.0)
 	    end)
 	    :onButtonClicked(function()
-	    	callback(PauseView.EventAgain)
-	    end)
-	    :pos(display.cx, 580)
-	    :addTo(self)
-
-	-- give up
-	cc.ui.UIPushButton.new(PauseView.ImgGiveUpBtn)
-	    :onButtonPressed(function(event)
-	        event.target:setScale(1.1)
-	    end)
-	    :onButtonRelease(function(event)
-	        event.target:setScale(1.0)
-	    end)
-	    :onButtonClicked(function()
-	    	callback(PauseView.EventGiveUp)
-	    end)
-	    :pos(display.cx, 420)
-	    :addTo(self)
-
-	-- back
-	cc.ui.UIPushButton.new(PauseView.ImgBackBtn)
-	    :onButtonPressed(function(event)
-	        event.target:setScale(1.1)
-	    end)
-	    :onButtonRelease(function(event)
-	        event.target:setScale(1.0)
-	    end)
-	    :onButtonClicked(function()
-	    	callback(PauseView.EventBack)
+	    	self.callback_(PauseView.EventAgain)
 	    end)
 	    :pos(display.cx, 260)
 	    :addTo(self)
 
-	-- close
-	cc.ui.UIPushButton.new(PauseView.ImgCloseBtn)
+	-- give up
+	cc.ui.UIPushButton.new(ImageName.BtnGiveUp)
 	    :onButtonPressed(function(event)
 	        event.target:setScale(1.1)
 	    end)
@@ -78,10 +60,25 @@ function PauseView:ctor(callback)
 	        event.target:setScale(1.0)
 	    end)
 	    :onButtonClicked(function()
-	    	callback(PauseView.EventBack)
+	    	self.callback_(PauseView.EventGiveUp)
 	    end)
-	    :pos(670, 1070)
+	    :pos(display.cx-150, 140)
 	    :addTo(self)
+
+	-- back
+	cc.ui.UIPushButton.new(ImageName.BtnNext)
+	    :onButtonPressed(function(event)
+	        event.target:setScale(1.1)
+	    end)
+	    :onButtonRelease(function(event)
+	        event.target:setScale(1.0)
+	    end)
+	    :onButtonClicked(function()
+	    	self.callback_(PauseView.EventBack)
+	    end)
+	    :pos(display.cx+150, 140)
+	    :addTo(self)
+
 end
 
 return PauseView

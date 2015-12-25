@@ -32,7 +32,7 @@ configArr[1] = {
 	name = "艾利之书",
 	detail = "月明星稀，乌鹊南飞。绕树三匝，何枝可依？山不厌高，海不厌深。周公吐哺，天下归心。",
 	stamina = 1,
-	picture = "pic_1",
+	picture = 1,
 	drop = {2, 2, 0, 1, 1},
 	skill = {1, 2, 3, 4, 5},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -75,7 +75,7 @@ configArr[2] = {
 	name = "X档案",
 	detail = "月明星稀，乌鹊南飞。绕树三匝，何枝可依？山不厌高，海不厌深。周公吐哺，天下归心。",
 	stamina = 1,
-	picture = "pic_2",
+	picture = 2,
 	drop = {0, 1, 0, 1, 1},
 	skill = {1, 2, 3, 7, 8},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -118,7 +118,7 @@ configArr[3] = {
 	name = "达芬奇密码",
 	detail = "月明星稀，乌鹊南飞。绕树三匝，何枝可依？山不厌高，海不厌深。周公吐哺，天下归心。",
 	stamina = 1,
-	picture = "pic_3",
+	picture = 3,
 	drop = {1, 1, 1, 1, 0},
 	skill = {1, 6, 3, 4, 8},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -154,14 +154,17 @@ configArr[3] = {
 
 configArr[4] = {
 	target = {
-		{7, 2},
-		{8, 2},
+		{1, 30},
+		{2, 30},
+		{3, 30},
+		{4, 30},
+		{5, 30},
 	},
 	step = 20,
 	name = "test",
 	detail = "月明星稀，乌鹊南飞。绕树三匝，何枝可依？山不厌高，海不厌深。周公吐哺，天下归心。",
 	stamina = 1,
-	picture = "pic_3",
+	picture = 3,
 	drop = {1, 1, 1, 1, 1},
 	skill = {1, 2, 3, 4, 5},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -212,7 +215,7 @@ configArr[4] = {
 -- configArr[19] = {}
 -- configArr[20] = {}
 
-function LevelCfg.getLevelCount()
+function LevelCfg.getCount()
 	return #configArr
 end
 

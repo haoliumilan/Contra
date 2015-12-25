@@ -96,12 +96,12 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
 end
 
 function ChooseLevelScene:numberOfCellsInTableView(table)
-    return LevelCfg.getLevelCount()
+    return LevelCfg.getCount()
 end
 
 function ChooseLevelScene:cellCb(event)
     if event.name == "cellClicked" then
-        local levelCount = LevelCfg.getLevelCount()
+        local levelCount = LevelCfg.getCount()
         if event.cellType == enLevelCellType.Close then
             self.curSelectIndex_ = event.idx
             self.listView_:reloadData()

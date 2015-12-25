@@ -17,7 +17,7 @@ function MyApp:run()
 
     math.randomseed(os.time())
 
-    self:enterScene("PlayLevelScene", {4})
+    self:enterScene("ChooseLevelScene")
 
 end
 
