@@ -50,10 +50,17 @@ function PlayDirector:ctor(levelData)
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.curEffectStones_ = {} -- 当前技能波及的stone
-	self.leftStep_ = 0 --self.levelData_.step -- 剩余回合数
+	self.leftStep_ = 0--self.levelData_.step -- 剩余回合数
 
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
 	self.usedSkills_ = {} -- 使用的技能数量，用于统计
+
+	self.coverLayer_ = display.newColorLayer(cc.c4b(0, 0, 0, 150))
+		:addTo(self, 1)
+		:pos(25, 25)
+		:size(display.width-50, display.width-50)
+	self.coverLayer_:setVisible(false)
+	self.coverLayer_:setTouchSwallowEnabled(false)
 
 	-- 掉落stone类型容器
 	self.dropStoneArr_ = {}
@@ -111,8 +118,6 @@ function PlayDirector:setStateMachine_()
 	    {name = "resetStone", from = {"stoneSelect", "stoneClear", "skillUse", "skillSelect"}, to = "normal" },
 	    -- 选中skill
 	    {name = "selectSkill", from = {"normal", "skillSelect", "skillUse"}, to = "skillSelect" },
-	    -- 重置技能
-	    {name = "resetSkill", from = {"skillSelect", "skillUse"}, to = "normal" },    	    	    
 	    -- 确认技能
 	    {name = "useSkill", from = {"skillSelect", "skillUse"}, to = "skillUse" },    	    
 	}
@@ -126,7 +131,6 @@ function PlayDirector:setStateMachine_()
 	    onresetStone = handler(self, self.onResetStone_),
 	    onselectSkill = handler(self, self.onSelectSkill_),
 	    onuseSkill = handler(self, self.onUseSkill_),
-	    onresetSkill = handler(self, self.onResetSkill_)
 	}
 
 	self.fsm__:setupState({
@@ -172,7 +176,7 @@ function PlayDirector:onStart_(event)
 				if coverType > 0 then
 					posX, posY = self:getStonePosByIndex_(i, j)
 					self.coverViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = coverType})
-						:addTo(self, 1)
+						:addTo(self, 2)
 						:pos(posX, posY)
 				end
 
@@ -196,7 +200,7 @@ function PlayDirector:onStart_(event)
 			if wallXCfg[i][j] and wallXCfg[i][j] > 0 then
 				posX, posY = self:getWallXPosByIndex_(i, j)
 				self.wallXViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallXCfg[i][j]})
-					:addTo(self, 1)
+					:addTo(self, 2)
 					:pos(posX, posY)
 			end
 		end
@@ -210,7 +214,7 @@ function PlayDirector:onStart_(event)
 			if wallYCfg[i][j] and wallYCfg[i][j] > 0 then
 				posX, posY = self:getWallYPosByIndex_(i, j)
 				self.wallYViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallYCfg[i][j]})
-					:addTo(self, 1)
+					:addTo(self, 2)
 					:pos(posX, posY)
 					:rotation(90)
 			end
@@ -224,10 +228,12 @@ function PlayDirector:onSelectStone_(event)
 	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 	local selectStone = event.args[1]
 	self.skillViews_[selectStone:getStoneType()]:showSkillCount(true)
+	self.coverLayer_:setVisible(true)
 
 	self.selectStones_ = self:getCanLinkStones_(selectStone)
 
 	for i,v in ipairs(self.selectStones_) do
+		self:reorderChild(v, 1)
 		v:setStoneState(enStoneState.Highlight)
 		if v:getSkillData() ~= nil then
 			self:showSkillEffect_(v)
@@ -312,7 +318,9 @@ function PlayDirector:onClearStone_(event)
 				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
 				findSplashStone(oneStone)
 				if oneStone:getSkillData() then
-  					self.usedSkills_[self.selectSkill_:getSkillId()] = self.usedSkills_[self.selectSkill_:getSkillId()] + 1
+					local skillId = oneStone:getSkillData():getSkillId()
+					self.usedSkills_[skillId] = self.usedSkills_[skillId] or 0
+  					self.usedSkills_[skillId] = self.usedSkills_[skillId] + 1
 				end
 
 				self:clearOne_(self.stoneViews_, oneStone)
@@ -372,10 +380,22 @@ function PlayDirector:onClearStone_(event)
 	end
 
 	self:dispatchEvent({name = PlayDirector.CLEAR_STONE_EVENT})
-	self.fsm__:doEvent("resetStone", true)
+	self.fsm__:doEvent("resetStone", {is_clear = true})
 end
 
 function PlayDirector:onResetStone_(event)
+	local args = event.args[1] or {}
+	if self.curSkillStone_ and args.is_useSkill ~= true then
+		self.curSkillStone_:setSkillData(nil)
+	end
+	self.curSkillStone_ = nil
+
+	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getStoneType()]:getSkillState() == enSkillState.Using then
+		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
+	end
+	self.selectSkill_ = nil
+
+	self.coverLayer_:setVisible(false)
 	-- 重置所有stone
 	self.selectStones_ = {}
 
@@ -383,6 +403,9 @@ function PlayDirector:onResetStone_(event)
 		for j=1,PlayDirector.SMaxCol do
 			local oneStone = self.stoneViews_[i][j]
 			if oneStone then
+				if oneStone:getStoneState() == enStoneState.Highlight then
+					self:reorderChild(oneStone, 0)
+				end
 				oneStone:setStoneState(enStoneState.Normal, true)
 			end
 		end
@@ -393,7 +416,7 @@ function PlayDirector:onResetStone_(event)
 	end
 
 	-- 如果消除了，就要更新Matrix
-	if event.args[1] then
+	if args.is_clear == true then
 		self:updateMatrix_()
 	end
 end
@@ -402,6 +425,7 @@ function PlayDirector:onSelectSkill_(event)
 	if self.selectSkill_ then
 		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
 	end
+	self.coverLayer_:setVisible(true)
 
 	self.selectSkill_ = event.args[1]
 	self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.Using)
@@ -414,32 +438,12 @@ function PlayDirector:onSelectSkill_(event)
 					oneStone:setStoneState(enStoneState.Disable, true)
 				else
 					oneStone:setStoneState(enStoneState.Highlight, true)
+					self:reorderChild(oneStone, 1)
 				end
 			end
 		end
 	end
 
-end
-
-function PlayDirector:onResetSkill_(event)
-	if event.args[1] ~= true and self.curSkillStone_ then
-		self.curSkillStone_:setSkillData(nil)
-	end
-	self.curSkillStone_ = nil
-
-	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getStoneType()]:getSkillState() == enSkillState.Using then
-		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
-	end
-	self.selectSkill_ = nil
-
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() ~= enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Normal, true)
-			end
-		end
-	end
 end
 
 function PlayDirector:onUseSkill_(event)
@@ -467,7 +471,7 @@ function PlayDirector:initSkill_()
 		self.skillDatas_[i] = SkillData.new(self.levelData_.skill[i])
 		posX = PlayDirector.SkOriPosX + PlayDirector.SkSpace * i + PlayDirector.SkSide * (i - 0.5)
 		self.skillViews_[i] = app:createView("SkillView", {skillData = self.skillDatas_[i]})
-			:addTo(self)
+			:addTo(self, 1)
 			:pos(posX, PlayDirector.SkOriPosY)
 	end
 end
@@ -688,19 +692,19 @@ function PlayDirector:onTouch_(event)
 	    		self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtSureSkill})
 	    		self.fsm__:doEvent("useSkill", oneStone)
 	    	else
-	    		self.fsm__:doEvent("resetSkill", false)
+	    		self.fsm__:doEvent("resetStone")
 	    	end
 	    elseif state == "skillUse" then
 		   	-- 已经显示技能效果了
 		   	if stoneState == enStoneState.Highlight then
 		   		if oneStone:getSkillData() ~= nil then
 		   			self.selectSkill_:setCurCount(0)
-		   			self.fsm__:doEvent("resetSkill", true)
+		   			self.fsm__:doEvent("resetStone", {is_useSkill = true})
 		   		else
 		   			self.fsm__:doEvent("useSkill", oneStone)
 		   		end
 		   	else
-		   		self.fsm__:doEvent("resetSkill", false)
+		   		self.fsm__:doEvent("resetStone", false)
 		   	end
 
     	else

@@ -10,6 +10,7 @@ local PauseView = import("..views.PauseView")
 local SuccessView = import("..views.SuccessView")
 local FailView = import("..views.FailView")
 local TargetView = import("..views.TargetView")
+local PicView = import("..views.PicView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -43,6 +44,10 @@ function PlayLevelScene:ctor(levelId)
 
     -- 提示
     self.tipsView_ = TipsView.new()
+        :addTo(self)
+
+    --
+    self.picView_ = app:createView("PicView", {picId = self.levelData_.picture})
         :addTo(self)
 
     -- 

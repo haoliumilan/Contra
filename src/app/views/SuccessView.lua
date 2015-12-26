@@ -43,6 +43,12 @@ function SuccessView:ctor(property)
         :addTo(self)
         :scale(0.5)
 
+    -- award
+    display.newTTFLabel({text = self.levelData_.award, size = 30, color = display.COLOR_BLACK,
+        valign = cc.VERTICAL_TEXT_ALIGNMENT_TOP, align = cc.TEXT_ALIGNMENT_LEFT, dimensions = cc.size(540, 150)})    
+            :pos(display.cx, 330)
+            :addTo(self)
+
 	-- back button
     cc.ui.UIPushButton.new(ImageName.BtnBack)
         :onButtonPressed(function(event)

@@ -44,7 +44,6 @@ function SkillView:ctor(property)
 
     self:updateSkillCount_()
 
-	self:updateSprite_()
 end
 
 function SkillView:getSkillState()

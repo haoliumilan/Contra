@@ -31,6 +31,7 @@ function StoneView:ctor(property)
     self.isSkillEffect_ = false -- 使用技能消除的
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
+    self.sprite_:setCascadeOpacityEnabled(true)
     self.skillEffectSp_ = nil
     self.label_ = cc.ui.UILabel.new({UILabelType = 2, text = "", size = 30, color = cc.c3b(0, 0, 0)})
 	    :align(display.CENTER)
@@ -132,12 +133,12 @@ function StoneView:updateSprite_()
     self.sprite_:setTexture(texFile)
 
     local size = self.sprite_:getContentSize()
-    if self.stoneState_ == enStoneState.Disable then
-        local filters = filter.newFilter("BRIGHTNESS", {-0.5})
-        self.sprite_:setFilter(filters)
-    else
-        self.sprite_:clearFilter()
-    end
+    -- if self.stoneState_ == enStoneState.Disable then
+    --     local filter = filter.newFilter("BRIGHTNESS", {-0.5})
+    --     self.sprite_:setFilter(filter)
+    -- else
+    --     self.sprite_:clearFilter()
+    -- end
 
     -- 技能icon
     if self.skillData_ then
@@ -151,6 +152,17 @@ function StoneView:updateSprite_()
     if self.isSkillEffect_ == true then
         display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
+    end
+
+    if self.stoneState_ == enStoneState.Highlight or self.isSkillEffect_ == true then
+        local sequence = transition.sequence({
+                cc.FadeTo:create(0.8, 100),
+                cc.FadeTo:create(0.8, 255),
+            })
+        self.sprite_:runAction(cc.RepeatForever:create(sequence))
+    else
+        self.sprite_:setOpacity(255)
+        self.sprite_:stopAllActions()        
     end
 
 end
