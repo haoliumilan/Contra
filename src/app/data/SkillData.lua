@@ -30,7 +30,7 @@ function SkillData:ctor(id)
 			return a < b
 		end)
 
-	-- self.curCount_ = self.needCount_
+	self.curCount_ = self.needCount_
 end
 
 ---- property

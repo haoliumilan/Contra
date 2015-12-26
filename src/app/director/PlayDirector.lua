@@ -113,7 +113,7 @@ function PlayDirector:setStateMachine_()
 	    -- 选中stone
 	    {name = "selectStone", from = "normal", to = "stoneSelect" },
 	    -- 消除stone
-	    {name = "clearStone", from = "stoneSelect", to = "stoneClear" },
+	    {name = "clearStone", from = {"stoneSelect", "skillUse"}, to = "stoneClear" },
 	    -- 重置stone
 	    {name = "resetStone", from = {"stoneSelect", "stoneClear", "skillUse", "skillSelect"}, to = "normal" },
 	    -- 选中skill
@@ -234,7 +234,7 @@ function PlayDirector:onSelectStone_(event)
 
 	for i,v in ipairs(self.selectStones_) do
 		self:reorderChild(v, 1)
-		v:setStoneState(enStoneState.Highlight)
+		v:setStoneState(enStoneState.Highlight, {isFade = true})
 		if v:getSkillData() ~= nil then
 			self:showSkillEffect_(v)
 		end
@@ -253,6 +253,9 @@ function PlayDirector:onSelectStone_(event)
 end
 
 function PlayDirector:onClearStone_(event)
+	event.args[1] = event.args[1] or {}
+	local isClearSkill = event.args[1].isClearSkill or false
+
 	local clearColors = {} -- 每种颜色消除的数量
 	local splashStones = {} -- 被溅射到的stone
 	local splashCovers = {} -- 被溅射到的cover
@@ -313,7 +316,7 @@ function PlayDirector:onClearStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			if oneStone and (oneStone:getStoneState() == enStoneState.Highlight 
+			if oneStone and ((oneStone:getStoneState() == enStoneState.Highlight and isClearSkill == false)
 				or oneStone:getIsSkillEffect() == true) then
 				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
 				findSplashStone(oneStone)
@@ -406,7 +409,7 @@ function PlayDirector:onResetStone_(event)
 				if oneStone:getStoneState() == enStoneState.Highlight then
 					self:reorderChild(oneStone, 0)
 				end
-				oneStone:setStoneState(enStoneState.Normal, true)
+				oneStone:setStoneState(enStoneState.Normal, {isClearSkillEffect = true})
 			end
 		end
 	end
@@ -435,9 +438,9 @@ function PlayDirector:onSelectSkill_(event)
 			local oneStone = self.stoneViews_[i][j]
 			if oneStone then
 				if oneStone:getStoneType() ~= self.selectSkill_:getStoneType() then
-					oneStone:setStoneState(enStoneState.Disable, true)
+					oneStone:setStoneState(enStoneState.Disable, {isClearSkillEffect = true})
 				else
-					oneStone:setStoneState(enStoneState.Highlight, true)
+					oneStone:setStoneState(enStoneState.Highlight, {isClearSkillEffect = true})
 					self:reorderChild(oneStone, 1)
 				end
 			end
@@ -697,9 +700,12 @@ function PlayDirector:onTouch_(event)
 	    elseif state == "skillUse" then
 		   	-- 已经显示技能效果了
 		   	if stoneState == enStoneState.Highlight then
-		   		if oneStone:getSkillData() ~= nil then
+		   		if oneStone:getIsSkillEffect() == true then
 		   			self.selectSkill_:setCurCount(0)
-		   			self.fsm__:doEvent("resetStone", {is_useSkill = true})
+		   			self.curSkillStone_ = nil
+		   			self.fsm__:doEvent("clearStone", {isClearSkill = true})
+
+		   			-- self.fsm__:doEvent("resetStone", {is_useSkill = true})
 		   		else
 		   			self.fsm__:doEvent("useSkill", oneStone)
 		   		end

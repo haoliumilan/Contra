@@ -29,6 +29,7 @@ function StoneView:ctor(property)
     self.skillData_ = property.skill or nil
     self.curHitCount_ = self.stoneCfg_.hit_count
     self.isSkillEffect_ = false -- 使用技能消除的
+    self.isFade_ = false -- 是否闪烁
 
     self.sprite_ = display.newFilteredSprite():addTo(self)
     self.sprite_:setCascadeOpacityEnabled(true)
@@ -65,11 +66,14 @@ function StoneView:getIsSelected()
     return self.stoneCfg_.is_selected
 end
 
-function StoneView:setStoneState(stoneState, isClearSkillEffect)
+function StoneView:setStoneState(stoneState, data)
+    data = data or {}
+    data.isClearSkillEffect = data.isClearSkillEffect or false
     self.stoneState_ = stoneState
-    if isClearSkillEffect == true then
+    if data.isClearSkillEffect == true then
         self.isSkillEffect_ = false
     end
+    self.isFade_ = data.isFade or false
     self:updateSprite_()
 end
 
@@ -154,9 +158,13 @@ function StoneView:updateSprite_()
             :addTo(self.sprite_)
     end
 
-    if self.stoneState_ == enStoneState.Highlight or self.isSkillEffect_ == true then
+    if self.isFade_ == true or self.isSkillEffect_ == true then
+        local value = 100
+        if self.isSkillEffect_ == true then
+            value = 0
+        end
         local sequence = transition.sequence({
-                cc.FadeTo:create(0.8, 100),
+                cc.FadeTo:create(0.8, value),
                 cc.FadeTo:create(0.8, 255),
             })
         self.sprite_:runAction(cc.RepeatForever:create(sequence))
