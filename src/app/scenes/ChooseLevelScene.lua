@@ -44,6 +44,25 @@ function ChooseLevelScene:ctor()
     self.listView_:registerScriptHandler(handler(self,self.tableCellAtIndex),cc.TABLECELL_SIZE_AT_INDEX)
     self.listView_:reloadData()
 
+    -- touchLayer 用于接收触摸事件
+    self.touchLayer_ = display.newLayer()
+    self:addChild(self.touchLayer_)
+    -- 启用触摸
+    self.touchLayer_:setTouchEnabled(true) 
+    self.touchLayer_:setTouchSwallowEnabled(false)
+    -- 添加触摸事件处理函数
+    self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch_))
+
+end
+
+function ChooseLevelScene:onTouch_(event)
+    if event.name == "began" then
+        return true
+    elseif event.name == "ended" then
+        if cc.rectContainsPoint(cc.rect(520, 1220, 230, 114), cc.p(event.x, event.y)) == true then
+            app:enterScene("MainScene", nil, "flipy")
+        end
+    end
 end
 
 function ChooseLevelScene:scrollViewDidScroll(view)

@@ -52,7 +52,7 @@ function MainScene:onTouch(event)
     -- local label = string.format("PlayDirector: %s x,y: %0.2f, %0.2f", event.name, event.x, event.y)
     -- print(label)
     if event.name == "began" then
-
+        print("MainScene:onTouch lalalala")
     elseif event.name == "moved" then
         local posX = self.bigImg:getPositionX()
         posX = posX - (event.prevX - event.x)

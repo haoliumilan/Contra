@@ -114,15 +114,10 @@ function ChooseLevelCell:showOpenView()
 	local cellBg = display.newSprite(ChooseLevelCell.ImgCellOpenBg)
 		:addTo(self)
 
-	local name = string.format("%s.%s", self.levelData_.id, self.levelData_.name)
-	local menuLabel = cc.MenuItemLabel:create(display.newTTFLabel({text = name, size = 40, color = display.COLOR_BLACK}))
-		:pos(-40, 440)
-	menuLabel:registerScriptTapHandler(function()
-	 	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
-		end)
-	local menu = cc.Menu:create(menuLabel)
-			:addTo(self)
-			:pos(0, 0)
+	local titleLb = display.newTTFLabel({text = "", size = 40, color = display.COLOR_BLACK})	
+	        :pos(-40, 440)
+	        :addTo(self)
+	titleLb:setString(string.format("%d.%s", self.idx_+1, self.levelData_.name))
 
 	local arrowSp = display.newSprite(ChooseLevelCell.ImgArrowUp, 230, 440)
 	    :addTo(self)
@@ -168,6 +163,27 @@ function ChooseLevelCell:showOpenView()
         end)
         :pos(0, -390)
         :addTo(self)
+
+    -- touchLayer 用于接收触摸事件
+    self.touchLayer_ = display.newLayer()
+    	:size(560, 60)
+    	:pos(-280, 420)
+    	:addTo(self)
+
+    -- 启用触摸
+    self.touchLayer_:setTouchEnabled(true) 
+    self.touchLayer_:setTouchSwallowEnabled(false)
+    -- 添加触摸事件处理函数
+    self.touchLayer_:addNodeEventListener(cc.NODE_TOUCH_EVENT, handler(self, self.onTouch_))
+end
+
+function ChooseLevelCell:onTouch_(event)
+	if event.name == "began" then
+	    return true
+	elseif event.name == "ended" then
+	 	self.callback_({name = ChooseLevelCell.EventCellClicked, cellType = self.cellType_, idx = self.idx_})
+	end
+
 end
 
 function ChooseLevelCell:showLockView()
