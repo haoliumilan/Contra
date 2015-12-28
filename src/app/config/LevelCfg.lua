@@ -35,6 +35,7 @@ configArr[1] = {
 	award = "“头发多的秀技术，头发少的玩套路。你这种情况的话…..下一关玩套路！”",
 	stamina = 1,
 	picture = 1,
+	image = 1, 
 	drop = {2, 2, 0, 1, 1},
 	skill = {1, 2, 3, 4, 5},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -79,6 +80,7 @@ configArr[2] = {
 	award = "我相信你已经具备回答这三个问题的能力了：“早上吃什么？中午吃什么？晚上吃什么？”",
 	stamina = 1,
 	picture = 2,
+	image = 2,
 	drop = {0, 1, 0, 1, 1},
 	skill = {1, 2, 3, 7, 8},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -123,6 +125,7 @@ configArr[3] = {
 	award = "“↑↑↓↓←→←→BABA！恭喜你获得了30条命！可是游戏已经通关了。再见。”",
 	stamina = 1,
 	picture = 3,
+	image = 3,
 	drop = {1, 1, 1, 1, 0},
 	skill = {1, 6, 3, 4, 8},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -170,6 +173,7 @@ configArr[4] = {
 	award = "？？？",
 	stamina = 1,
 	picture = 3,
+	image = 3,
 	drop = {1, 1, 1, 1, 1},
 	skill = {1, 2, 3, 4, 5},
 	-- 1：红、2：黄、3：绿、4：蓝、5：紫、6：铁箱、7：木箱A、8：木箱B、9：铁墙、10：木墙、11：冰块
@@ -221,7 +225,11 @@ configArr[4] = {
 -- configArr[20] = {}
 
 function LevelCfg.getCount()
-	return #configArr
+	if BEIBEI_TEST == true then
+		return #configArr-1
+	else
+		return #configArr
+	end
 end
 
 function LevelCfg.get(levelId)

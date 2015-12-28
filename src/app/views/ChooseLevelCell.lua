@@ -122,7 +122,7 @@ function ChooseLevelCell:showOpenView()
 	local arrowSp = display.newSprite(ChooseLevelCell.ImgArrowUp, 230, 440)
 	    :addTo(self)
 
-	local image = display.newSprite(string.format(ChooseLevelCell.ImgImg, self.levelData_.id), -10, 290)
+	local image = display.newSprite(string.format(ChooseLevelCell.ImgImg, self.levelData_.image), -10, 290)
 			:addTo(self)
 
 	local detailLb = display.newTTFLabel({text = self.levelData_.detail, size = 25, color = display.COLOR_BLACK,

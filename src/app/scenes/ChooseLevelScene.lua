@@ -115,11 +115,7 @@ function ChooseLevelScene:tableCellAtIndex(table, idx)
 end
 
 function ChooseLevelScene:numberOfCellsInTableView(table)
-    local count = LevelCfg.getCount()
-    if BEIBEI_TEST == nil then
-        count = count - 1
-    end
-    return count
+    return LevelCfg.getCount()
 end
 
 function ChooseLevelScene:cellCb(event)

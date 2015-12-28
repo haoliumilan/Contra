@@ -55,6 +55,7 @@ function PlayDirector:ctor(levelData)
 	else
 		self.leftStep_ = self.levelData_.step -- 剩余回合数
 	end
+	self.stepCount_ = 0 -- 使用的回合数
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
 	self.usedSkills_ = {} -- 使用的技能数量，用于统计
 
@@ -386,7 +387,9 @@ function PlayDirector:onClearStone_(event)
 	end
 
 	self:dispatchEvent({name = PlayDirector.CLEAR_STONE_EVENT})
-	self.fsm__:doEvent("resetStone", {is_clear = true})
+	self:performWithDelay(function()
+		self.fsm__:doEvent("resetStone", {is_clear = true})
+		end, 0.2)
 end
 
 function PlayDirector:onResetStone_(event)
@@ -953,6 +956,7 @@ function PlayDirector:useStepCount_()
 	else
 		self.leftStep_ = self.leftStep_ - 1
 	end
+	self.stepCount_ = self.stepCount_ + 1
 	self:dispatchEvent({name = PlayDirector.CHANGE_STEP_EVENT})
 end
 
@@ -1133,7 +1137,7 @@ end
 
 -- 获取统计数据
 function PlayDirector:getSettleData()
-	return {stone = self.clearStones_, skill = self.usedSkills_, step = self.leftStep_}
+	return {stone = self.clearStones_, skill = self.usedSkills_, step = self.stepCount_}
 end
 
 return PlayDirector
