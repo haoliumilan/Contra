@@ -8,4 +8,8 @@ end
 
 package.path = package.path .. ";src/"
 cc.FileUtils:getInstance():setPopupNotify(false)
+
+-- BEIBEI_TEST = true
+
 require("app.MyApp").new():run()
+

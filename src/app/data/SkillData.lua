@@ -30,7 +30,9 @@ function SkillData:ctor(id)
 			return a < b
 		end)
 
-	self.curCount_ = self.needCount_
+	if BEIBEI_TEST == nil then
+		-- self.curCount_ = self.needCount_
+	end
 end
 
 ---- property

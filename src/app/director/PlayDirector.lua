@@ -50,8 +50,11 @@ function PlayDirector:ctor(levelData)
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
 	self.curEffectStones_ = {} -- 当前技能波及的stone
-	self.leftStep_ = 0--self.levelData_.step -- 剩余回合数
-
+	if BEIBEI_TEST then
+		self.leftStep_ = 0
+	else
+		self.leftStep_ = self.levelData_.step -- 剩余回合数
+	end
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
 	self.usedSkills_ = {} -- 使用的技能数量，用于统计
 
@@ -945,7 +948,11 @@ end
 
 -- 回合数加一
 function PlayDirector:useStepCount_()
-	self.leftStep_ = self.leftStep_ + 1
+	if BEIBEI_TEST then
+		self.leftStep_ = self.leftStep_ + 1
+	else
+		self.leftStep_ = self.leftStep_ - 1
+	end
 	self:dispatchEvent({name = PlayDirector.CHANGE_STEP_EVENT})
 end
 
@@ -987,11 +994,11 @@ function PlayDirector:checkResult_()
 		return true
 	end
 
-	-- if self.leftStep_ <= 0 then
-	-- -- 回合数到了，关卡失败
-	-- 	self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
-	-- 	return true
-	-- end
+	if BEIBEI_TEST == nil and self.leftStep_ <= 0 then
+	-- 回合数到了，关卡失败
+		self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
+		return true
+	end
 
 	return false
 

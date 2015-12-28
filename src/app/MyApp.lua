@@ -17,7 +17,11 @@ function MyApp:run()
 
     math.randomseed(os.time())
 
-    self:enterScene("ChooseLevelScene")
+    if BEIBEI_TEST then
+        self:enterScene("MainScene")
+    else
+        self:enterScene("PlayLevelScene", {4})
+    end
 
 end
 
