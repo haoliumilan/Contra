@@ -953,7 +953,7 @@ function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
 end
 
 -- 获取一个stone可以连接的所有stone,
-function PlayDirector:getCanLinkStones_(startStone)
+function PlayDirector:getCanLinkStones_(startStone, isCheckStoneType)
 	if startStone == nil then
 		return {}
 	end
@@ -971,7 +971,7 @@ function PlayDirector:getCanLinkStones_(startStone)
 				and self:getIsLinkByWall(rowIndex, colIndex, DirectionValueArr[i][2], DirectionValueArr[i][1]) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
 			 	if self:getIsSelectStone_(relateStone) == true 
-			 		and relateStone:getStoneType() == oneStone:getStoneType() 
+			 		and (relateStone:getStoneType() == oneStone:getStoneType() or isCheckStoneType == false) 
 			 		and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
 					findCanLinkStone(relateStone)
@@ -1035,7 +1035,7 @@ function PlayDirector:newStep_()
 	else
 		-- 不能消除，重新排列
 		if self:updateActiveStonePos_() == false then
-			self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT})
+			self:dispatchEvent({name = PlayDirector.LEVEL_FAIL_EVENT, isNotAddStep = true})
 		end
 	end
 
@@ -1078,15 +1078,17 @@ function PlayDirector:addStepCount()
 end
 
 -- 检查当前是否没有可以消除的stone
-function PlayDirector:checkIsCanClear_()
+function PlayDirector:checkIsCanClear_(isCheckStoneType)
 	local oneStone = nil
 	local relateStones = nil
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			relateStones = self:getCanLinkStones_(oneStone)
-			if #relateStones > 2 then
-				return true
+			if self:getIsSelectStone_(oneStone) == true then
+				relateStones = self:getCanLinkStones_(oneStone, isCheckStoneType)
+				if #relateStones > 2 then
+					return true
+				end
 			end
 		end
 	end
@@ -1094,9 +1096,9 @@ function PlayDirector:checkIsCanClear_()
 	return false
 end
 
--- 刷新所有可以移动的stone，保证可以消除，如果肯定不能消除，那么关卡失败
-function PlayDirector:updateActiveStonePos_()
-	local stoneTypeArr = {} -- 不同类型的stone，如果没有超过3个的，说明刷新也不会带来消除
+-- 检查当前可以移动的所有stone，各种类数量是否都小于3的
+function PlayDirector:checkStoneTypeLessThree_()
+	local stoneTypeArr = {}
 	for i=1,enStoneType.Max-1 do
 		stoneTypeArr[i] = 0
 	end
@@ -1116,17 +1118,30 @@ function PlayDirector:updateActiveStonePos_()
 		end
 	end
 
-	local allLessTwo = true
+	local allLessThree = true
 	for i,v in ipairs(stoneTypeArr) do
 		if v > 2 then
-			allLessTwo = false
+			allLessThree = false
 			break
 		end
 	end
-	if allLessTwo == true then
-	-- 剩下的stone的数量都小于3，刷新也没有用
-	-- *********** 如果一有障碍的情况下，及时同一种类型的stone超过2个，也可能会不能消除，后面再处理这种情况吧
+
+	return allLessThree, allActiveIndexArr, allActiveStones
+end
+
+-- 刷新所有可以移动的stone，保证可以消除，如果肯定不能消除，那么关卡失败
+function PlayDirector:updateActiveStonePos_()
+	-- 刷新也不会带来消除
+
+	local allLessThree, allActiveIndexArr, allActiveStones = self:checkStoneTypeLessThree_()
+	if allLessThree == true then
+	-- 1. 不同类型的stone，如果没有超过3个的，
 		return false
+	end
+
+	if self:checkIsCanClear_(false) == false then
+ 	-- 2. 忽略相同颜色的限制，相连的stone不超过3个，
+ 		return false
 	end
 
 	local function updateActiveStonePos2()

@@ -17,6 +17,7 @@ FailView.EventGiveUp = "giveUp"
 
 function FailView:ctor(property)
 	self.callback_ = property.callback
+	self.notAddStep_ = property.notAddStep or false
 
 	-- background color
 	display.newColorLayer(cc.c4b(0, 0, 0, 200))
@@ -30,20 +31,22 @@ function FailView:ctor(property)
 	display.newSprite(FailView.ImgFailBg, display.cx, display.cy-30)
 		:addTo(self)
 
-	-- add 5 step btn
-	cc.ui.UIPushButton.new(FailView.ImgAdd5Btn)
-	    :onButtonPressed(function(event)
-	        event.target:setScale(1.1)
-	    end)
-	    :onButtonRelease(function(event)
-	        event.target:setScale(1.0)
-	    end)
-	    :onButtonClicked(function()
-	    	self.callback_(FailView.EventAdd5)
-	    end)
-	    :pos(display.cx, 385)
-	    :addTo(self)
-
+	if self.notAddStep_ == false then
+		-- add 5 step btn
+		cc.ui.UIPushButton.new(FailView.ImgAdd5Btn)
+		    :onButtonPressed(function(event)
+		        event.target:setScale(1.1)
+		    end)
+		    :onButtonRelease(function(event)
+		        event.target:setScale(1.0)
+		    end)
+		    :onButtonClicked(function()
+		    	self.callback_(FailView.EventAdd5)
+		    end)
+		    :pos(display.cx, 385)
+		    :addTo(self)
+	end
+	
 	-- again btn
 	cc.ui.UIPushButton.new(ImageName.BtnAgain)
 	    :onButtonPressed(function(event)

@@ -116,8 +116,9 @@ function PlayLevelScene:levelSuccessCb_(tag)
 end
 
 -- 
-function PlayLevelScene:levelFail_()
-    self.failView_ = app:createView("FailView", {levelData = self.levelData_, callback = handler(self, self.levelFailCb_)})
+function PlayLevelScene:levelFail_(isNotAddStep)
+    self.failView_ = app:createView("FailView", {levelData = self.levelData_, callback = handler(self, self.levelFailCb_),
+        notAddStep = isNotAddStep})
         :addTo(self, 1)
 end
 
@@ -183,7 +184,7 @@ function PlayLevelScene:playDirectorCb_(event)
 
     elseif event.name == PlayDirector.LEVEL_FAIL_EVENT then
     -- 失败
-        self:levelFail_()
+        self:levelFail_(event.isNotAddStep)
 
     elseif event.name == PlayDirector.TIPS_EVENT then
     -- 提示

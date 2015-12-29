@@ -31,7 +31,7 @@ function SkillData:ctor(id)
 		end)
 
 	if BEIBEI_TEST == nil then
-		self.curCount_ = self.needCount_
+		-- self.curCount_ = self.needCount_
 	end
 end
 
