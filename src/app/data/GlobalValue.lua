@@ -20,6 +20,13 @@ enStoneType = {
 }
 enStoneType = EnumTable(enStoneType, 0)
 
+enStoneType2 = {
+    "Stone", -- 颜色stone
+    "Cover", -- 冰块
+    "Wall", -- 墙
+}
+enStoneType2 = EnumTable(enStoneType2, 0)
+
 -- 珠子关联方向类型, 8个方向
 DirectionValueArr = {
     {1, 0},   -- 右中

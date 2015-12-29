@@ -62,6 +62,10 @@ function StoneView:getIsSplash()
     return self.stoneCfg_.is_splash
 end
 
+function StoneView:getStoneType2()
+    return self.stoneCfg_.type2
+end
+
 function StoneView:getIsSelected()
     return self.stoneCfg_.is_selected
 end
@@ -152,11 +156,11 @@ function StoneView:updateSprite_()
             :rotation(self.skillData_:getIconAngle())
     end
 
-    --  技能波及
-    if self.isSkillEffect_ == true then
-        display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
-            :addTo(self.sprite_)
-    end
+    -- --  技能波及
+    -- if self.isSkillEffect_ == true then
+    --     display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
+    --         :addTo(self.sprite_)
+    -- end
 
     if self.isFade_ == true or self.isSkillEffect_ == true then
         local value = 100

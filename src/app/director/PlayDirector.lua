@@ -196,7 +196,6 @@ function PlayDirector:onStart_(event)
 	end
 
 	-- 墙 x轴
-	local oneWall = nil	
 	local wallXCfg = self.levelData_.wallX
 	for i=1,PlayDirector.SMaxRow+1 do
 		self.wallXViews_[i] = {}
@@ -280,7 +279,7 @@ function PlayDirector:onClearStone_(event)
 			local splashWall
 			if i%2==1 then
 				splashWall = self.wallYViews_[newRowIndex][newColIndex]
-				if splashWall then
+				if splashWall and splashWall:getIsSkillEffect() == false then
 					isSplashWall = true
 					if splashWall:getIsSplash() == true then
 						splashWallYs[splashWall] = true
@@ -288,7 +287,7 @@ function PlayDirector:onClearStone_(event)
 				end
 			else
 				splashWall = self.wallXViews_[newRowIndex][newColIndex]
-				if splashWall then
+				if splashWall and splashWall:getIsSkillEffect() == false then
 					isSplashWall = true
 					if splashWall:getIsSplash() == true then
 						splashWallXs[splashWall] = true
@@ -314,31 +313,41 @@ function PlayDirector:onClearStone_(event)
 		end
 	end
 
-	-- 消除选中的、技能波及的
-	local oneStone = nil
-	local oneCover = nil
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone and ((oneStone:getStoneState() == enStoneState.Highlight and isClearSkill == false)
-				or oneStone:getIsSkillEffect() == true) then
-				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
-				findSplashStone(oneStone)
-				if oneStone:getSkillData() then
-					local skillId = oneStone:getSkillData():getSkillId()
-					self.usedSkills_[skillId] = self.usedSkills_[skillId] or 0
-  					self.usedSkills_[skillId] = self.usedSkills_[skillId] + 1
+	-- 消除选中的
+	if isClearSkill == false then
+		local oneStone = nil
+		for i=1,PlayDirector.SMaxRow do
+			for j=1,PlayDirector.SMaxCol do
+				oneStone = self.stoneViews_[i][j]
+				if oneStone and oneStone:getStoneState() == enStoneState.Highlight 
+					and oneStone:getIsSkillEffect() == false then
+					findSplashStone(oneStone)
+					
+					if oneStone:getSkillData() then
+						local skillId = oneStone:getSkillData():getSkillId()
+						self.usedSkills_[skillId] = self.usedSkills_[skillId] or 0
+	  					self.usedSkills_[skillId] = self.usedSkills_[skillId] + 1
+					end
+
+					clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
+					self:clearOne_(oneStone)
 				end
 
-				self:clearOne_(self.stoneViews_, oneStone)
-			end
-
-			oneCover = self.coverViews_[i][j]
-			if oneCover and oneCover:getIsSkillEffect() == true then
-				clearColors[oneCover:getStoneType()] = clearColors[oneCover:getStoneType()] + 1
-				self:clearOne_(self.coverViews_, oneCover)				
 			end
 		end
+	else
+		local skillId = self.curSkillStone_:getSkillData():getSkillId()
+		self.usedSkills_[skillId] = self.usedSkills_[skillId] or 0
+		self.usedSkills_[skillId] = self.usedSkills_[skillId] + 1
+		findSplashStone(self.curSkillStone_)
+		self:clearOne_(self.curSkillStone_)
+		self.curSkillStone_ = nil
+	end
+
+	-- 技能波及的
+	for i,v in ipairs(self.curEffectStones_) do
+		clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
+		self:clearOne_(v)						
 	end
 
 	-- 消除溅射到的stone
@@ -346,7 +355,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne_(self.stoneViews_, v)
+			self:clearOne_(v)
 		end
 	end
 
@@ -355,7 +364,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne_(self.coverViews_, v)
+			self:clearOne_(v)
 		end
 	end
 
@@ -364,7 +373,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne_(self.wallXViews_, v)
+			self:clearOne_(v)
 		end
 	end
 
@@ -373,7 +382,7 @@ function PlayDirector:onClearStone_(event)
 	for i,v in ipairs(splashArr) do
 		if v:splash() == true then
 			clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-			self:clearOne_(self.wallYViews_, v)
+			self:clearOne_(v)
 		end
 	end
 
@@ -398,6 +407,7 @@ function PlayDirector:onResetStone_(event)
 		self.curSkillStone_:setSkillData(nil)
 	end
 	self.curSkillStone_ = nil
+	self.curEffectStones_ = {}
 
 	if self.selectSkill_ and self.skillViews_[self.selectSkill_:getStoneType()]:getSkillState() == enSkillState.Using then
 		self.skillViews_[self.selectSkill_:getStoneType()]:setSkillState(enSkillState.CanUse)
@@ -416,6 +426,26 @@ function PlayDirector:onResetStone_(event)
 					self:reorderChild(oneStone, 0)
 				end
 				oneStone:setStoneState(enStoneState.Normal, {isClearSkillEffect = true})
+			end
+		end
+	end
+
+	-- 墙 x轴
+	local oneWall = nil	
+	for i=1,PlayDirector.SMaxRow+1 do
+		for j=1,PlayDirector.SMaxCol do
+			oneWall = self.wallXViews_[i][j]
+			if oneWall and oneWall:getIsSkillEffect() == true then
+				oneWall:setSkillEffect(false)
+			end
+		end
+	end
+	-- 墙 y轴
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol+1 do
+			oneWall = self.wallYViews_[i][j]
+			if oneWall and oneWall:getIsSkillEffect() == true then
+				oneWall:setSkillEffect(false)
 			end
 		end
 	end
@@ -706,9 +736,8 @@ function PlayDirector:onTouch_(event)
 	    elseif state == "skillUse" then
 		   	-- 已经显示技能效果了
 		   	if stoneState == enStoneState.Highlight then
-		   		if oneStone:getIsSkillEffect() == true then
+		   		if oneStone == self.curSkillStone_ then
 		   			self.selectSkill_:setCurCount(0)
-		   			self.curSkillStone_ = nil
 		   			self.fsm__:doEvent("clearStone", {isClearSkill = true})
 
 		   			-- self.fsm__:doEvent("resetStone", {is_useSkill = true})
@@ -751,38 +780,72 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect_(oneStone)
-	table.insert(self.curEffectStones_, oneStone)
-	oneStone:setSkillEffect(true)
+	-- 对一个墙的技能效果 <-o-> 
+	--       -- --   -- -- 
+	-- 		|  |  |o|  |  |
+	-- 		 -- -- 	 -- --
+	local function showOneWallEffect(isX, rowIndex, colIndex)
+		local oneWall = nil
+		if isX == true then
+			oneWall = self.wallXViews_[rowIndex][colIndex]
+		else
+			oneWall = self.wallYViews_[rowIndex][colIndex]
+		end
+		if oneWall and oneWall:getIsSplash() == true and oneWall:getIsSkillEffect() == false then
+			table.insert(self.curEffectStones_, oneWall)
+			oneWall:setSkillEffect(true)
+		end
+	end
 
+	-- 对一个格子的技能效果
+	local function showOneIndexEffect(rowIndex, colIndex)
+		local effectCover = self.coverViews_[rowIndex][colIndex]
+		if effectCover then
+			if effectCover:getIsSkillEffect() == false and effectCover:getIsSplash() == true then
+				table.insert(self.curEffectStones_, effectCover)
+				effectCover:setSkillEffect(true)
+			end
+		else
+			local effectStone = self.stoneViews_[rowIndex][colIndex]
+			if effectStone and effectStone:getIsSkillEffect() == false and 
+				(self:getIsSelectStone_(effectStone) == true or effectStone:getIsSplash() == true) then
+				table.insert(self.curEffectStones_, effectStone)
+				effectStone:setSkillEffect(true)
+
+				if effectStone:getSkillData() ~= nil then
+				-- 技能触发技能
+					self:showSkillEffect_(effectStone)
+				end
+			end
+		end
+
+		-- 当前格子上下左右四个墙
+		showOneWallEffect(true, rowIndex+1, colIndex)
+		showOneWallEffect(true, rowIndex, colIndex)
+		showOneWallEffect(false, rowIndex, colIndex+1)
+		showOneWallEffect(false, rowIndex, colIndex)
+
+	end
+
+	-- 一个方向上的技能效果
 	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 		local newRowIndex, newColIndex
 		for j=1,effect do
 			newRowIndex = rowIndex + directionValue[2]*j
 			newColIndex = colIndex + directionValue[1]*j
+
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
-				-- 如果有cover，先弄cover
-				local effectCover = self.coverViews_[newRowIndex][newColIndex]
-				if effectCover then
-					if effectCover:getIsSkillEffect() == false and effectCover:getIsSplash() == true then
-						table.insert(self.curEffectStones_, effectCover)
-						effectCover:setSkillEffect(true)
-					end
-				else
-					local effectStone = self.stoneViews_[newRowIndex][newColIndex]
-					if effectStone and effectStone:getIsSkillEffect() == false and 
-						(self:getIsSelectStone_(effectStone) == true or effectStone:getIsSplash() == true) then
-						if effectStone:getSkillData() ~= nil then
-						-- 技能触发技能
-							self:showSkillEffect_(effectStone)
-						else
-							table.insert(self.curEffectStones_, effectStone)
-							effectStone:setSkillEffect(true)
-						end
-					end
+				-- wall
+				showOneIndexEffect(newRowIndex, newColIndex)
+			else
+				--  wallX多一行、wallY多一列
+				if newRowIndex == PlayDirector.SMaxRow + 1 then
+					showOneWallEffect(true, newRowIndex, newColIndex)
+				elseif newColIndex == PlayDirector.SMaxCol + 1 then
+					showOneWallEffect(false, newRowIndex, newColIndex)
 				end
 			end
 		end
-
 	end
 
 	local rowIndex, colIndex = oneStone:getRowColIndex()
@@ -1127,8 +1190,21 @@ function PlayDirector:getIsSelectStone_(oneStone)
 end
 
 -- 消除一个stone、wall、cover
-function PlayDirector:clearOne_(table, oneValue)
+function PlayDirector:clearOne_(oneValue)
 	if oneValue then
+		local table 
+		if oneValue:getStoneType2() == enStoneType2.Stone then
+			table = self.stoneViews_
+		elseif oneValue:getStoneType2() == enStoneType2.Cover then
+			table = self.coverViews_
+		elseif oneValue:getStoneType2() == enStoneType2.Wall then
+			if oneValue:getRotation() == 90 then
+				table = self.wallYViews_
+			else
+				table = self.wallXViews_
+			end
+		end
+
 		local rowIndex, colIndex = oneValue:getRowColIndex()
 		oneValue:removeFromParent()
 		table[rowIndex][colIndex] = nil
