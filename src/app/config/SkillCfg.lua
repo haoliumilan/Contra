@@ -21,44 +21,31 @@ local SkillCfg = {}
 
 local configArr = {}
 
--- 红左
+-- 水平一
 configArr[1] = {
-	stoneType = 1, direction = {5}, effect = 2, needCount = 25,
+	direction = {1, 5}, effect = 1, icon = 1, need = 4, 
+	merge = {{add = 1, to = 4}, {add = 2, to = 3}},
 }
 
--- 黄左右
+-- 垂直一
 configArr[2] = {
-	stoneType = 2, direction = {1, 5}, effect = 2, needCount = 25,
+	direction = {3, 7}, effect = 1, icon = 1, need = 4, 
+	merge = {{add = 1, to = 3}, {add = 2, to = 5}},
 }
 
--- 绿右	
+-- 十字
 configArr[3] = {
-	stoneType = 3, direction = {1}, effect = 2, needCount = 25,
+	direction = {3, 7}, effect = 1, icon = 3,
 }
 
--- 蓝上
+-- 水平三
 configArr[4] = {
-	stoneType = 4, direction = {7}, effect = 2, needCount = 25,
+	direction = {3, 7}, effect = 3, icon = 2,
 }
 
--- 紫上下
+-- 垂直三
 configArr[5] = {
-	stoneType = 5, direction = {3, 7}, effect = 2, needCount = 25,
-}
-
--- 黄下
-configArr[6] = {
-	stoneType = 2, direction = {3}, effect = 2, needCount = 25,
-}
-
--- 蓝下
-configArr[7] = {
-	stoneType = 4, direction = {3}, effect = 2, needCount = 25,
-}
-
--- 紫下
-configArr[8] = {
-	stoneType = 5, direction = {3}, effect = 2, needCount = 25,
+	direction = {3, 7}, effect = 3, icon = 2,
 }
 
 function SkillCfg.getCount()
@@ -66,6 +53,7 @@ function SkillCfg.getCount()
 end
 
 function SkillCfg.get(skillId)
+	skillId = tonumber(skillId)
     assert(skillId >= 1 and skillId <= #configArr, string.format("SkillCfg.get() - invalid skillId %s", tostring(skillId)))
     local oneSkill = clone(configArr[skillId])
     oneSkill["id"] = tostring(skillId)

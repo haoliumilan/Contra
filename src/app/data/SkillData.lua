@@ -18,10 +18,6 @@ SkillData.schema["iconIndex"] = {"number", 1} -- icon名字
 SkillData.schema["needCount"] = {"number", 1} -- 需要消除stone的数量
 SkillData.schema["curCount"] = {"number", 0} -- 当前消除stone的数量
 
--- 定义事件
-SkillData.CHANGE_CURCOUNT_EVENT = "CHANGE_CURCOUNT_EVENT"
-
-
 function SkillData:ctor(id)
 	SkillData.super.ctor(self, SkillCfg.get(id))
 
@@ -54,7 +50,7 @@ function SkillData:getDirection()
 end
 
 function SkillData:getIconIndex()
-	return #self.direction_
+	return self.iconIndex_
 end
 
 function SkillData:getIconAngle()
@@ -67,18 +63,6 @@ end
 
 function SkillData:getCurCount()
 	return self.curCount_
-end
-
-function SkillData:setCurCount(curCount)
-	self.curCount_ = curCount
-	self.curCount_ = math.min(self.curCount_, self.needCount_)
-	self:dispatchEvent({name = SkillData.CHANGE_CURCOUNT_EVENT})
-end
-
-function SkillData:addCurCount(addValue)
-	if addValue and addValue > 0 then
-		self:setCurCount(self.curCount_ + addValue)
-	end
 end
 
 -- 

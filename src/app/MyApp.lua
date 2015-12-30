@@ -17,6 +17,21 @@ function MyApp:run()
 
     math.randomseed(os.time())
 
+    local function test(atk, def, power, lv)
+        local factor, factor2
+        factor = atk/def
+        factor2 = math.log(lv+2*factor)/math.log(15*factor)
+        local hurt = (2*lv+10)/250*factor*power+2
+        local hurt2 = hurt*15*factor2
+        print("hurt", hurt, hurt2, factor2, atk, def, power, lv)
+    end
+
+    -- test(90, 80, 100, 10)
+    -- test(300, 250, 100, 30)
+    -- test(1500, 1300, 100, 50)
+    -- test(3000, 2500, 100, 70)
+    -- test(7000, 6500, 100, 90)
+
     if BEIBEI_TEST then
         self:enterScene("MainScene")
     else

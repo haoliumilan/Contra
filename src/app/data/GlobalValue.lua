@@ -28,7 +28,7 @@ enStoneType2 = {
 enStoneType2 = EnumTable(enStoneType2, 0)
 
 -- 珠子关联方向类型, 8个方向
-DirectionValueArr = {
+Direction8ValueArr = {
     {1, 0},   -- 右中
     {1, -1},   -- 右下
     {0, -1},   -- 中下
@@ -40,7 +40,7 @@ DirectionValueArr = {
 }
 
 -- 溅射方向类型，4个方向
-DirectionSplashArr = {
+Direction4ValueArr = {
     {-1, 0}, -- 左
     {0, 1}, -- 上
     {1, 0}, -- 右

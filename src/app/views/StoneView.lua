@@ -3,8 +3,8 @@
 -- Date: 2015-12-03 18:28:24
 -- 珠子的视图
 
-local SkillData = import("..data.SkillData")
 local StoneCfg = import("..config.StoneCfg")
+local SkillCfg = import("..config.SkillCfg")
 
 --  状态类型
 enStoneState = {
@@ -26,7 +26,10 @@ function StoneView:ctor(property)
     self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
     self.rowIndex_ = property.rowIndex or 1
     self.colIndex_ = property.colIndex or 1
-    self.skillData_ = property.skill or nil
+    self.skillData_ = nil
+    if property.skillId then
+        self.skillData_ = SkillCfg.get(property.skillId)
+    end
     self.curHitCount_ = self.stoneCfg_.hit_count
     self.isSkillEffect_ = false -- 使用技能消除的
     self.isFade_ = false -- 是否闪烁
@@ -38,9 +41,7 @@ function StoneView:ctor(property)
 	    :align(display.CENTER)
 	    :addTo(self)
 	self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
-    -- if self.stoneType_ > enStoneType.Purple then
-        self.label_:setVisible(false)
-    -- end
+    -- self.label_:setVisible(false)
     
     self:updateSprite_()
 end
@@ -127,46 +128,32 @@ end
 function StoneView:updateSprite_()
     local texFile = nil
     self.sprite_:removeAllChildren()
-    if self.stoneState_ == enStoneState.Normal or self.stoneState_ == enStoneState.Disable then
-        if self.curHitCount_ < self.stoneCfg_.hit_count then
-            texFile = string.format(ImageName.StoneNorml2, self.stoneType_, (self.stoneCfg_.hit_count+1-self.curHitCount_))
-        else
-            texFile = string.format(ImageName.StoneNorml, self.stoneType_)
-        end
-    elseif self.stoneState_ == enStoneState.Highlight then
-        texFile = string.format(ImageName.StoneHightlight, self.stoneType_)
+    if self.curHitCount_ < self.stoneCfg_.hit_count then
+        texFile = string.format(ImageName.StoneNorml2, self.stoneType_, (self.stoneCfg_.hit_count+1-self.curHitCount_))
+    else
+        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
     end
 
     if not texFile then return end
     self.sprite_:setTexture(texFile)
 
     local size = self.sprite_:getContentSize()
-    -- if self.stoneState_ == enStoneState.Disable then
-    --     local filter = filter.newFilter("BRIGHTNESS", {-0.5})
-    --     self.sprite_:setFilter(filter)
-    -- else
-    --     self.sprite_:clearFilter()
-    -- end
 
     -- 技能icon
     if self.skillData_ then
-        texFile = string.format(ImageName.SkillIcon, self.skillData_:getIconIndex())
+        texFile = string.format(ImageName.SkillIcon, self.skillData_.icon)
+        local angle = (self.skillData_.direction[1] - 1) * 45
         display.newSprite(texFile, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
-            :rotation(self.skillData_:getIconAngle())
+            :rotation(angle)
     end
 
-    -- --  技能波及
-    -- if self.isSkillEffect_ == true then
-    --     display.newSprite(StoneView.ImgSkillXuKuang, size.width*0.5, size.height*0.5)
-    --         :addTo(self.sprite_)
-    -- end
-
-    if self.isFade_ == true or self.isSkillEffect_ == true then
+    -- 闪烁
+    if self.isFade_ == true then
         local value = 100
-        if self.isSkillEffect_ == true then
-            value = 0
-        end
+        -- if self.isSkillEffect_ == true then
+        --     value = 0
+        -- end
         local sequence = transition.sequence({
                 cc.FadeTo:create(0.8, value),
                 cc.FadeTo:create(0.8, 255),

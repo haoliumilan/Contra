@@ -11,6 +11,7 @@ local SuccessView = import("..views.SuccessView")
 local FailView = import("..views.FailView")
 local TargetView = import("..views.TargetView")
 local PicView = import("..views.PicView")
+local StoneView = import("..views.StoneView")
 
 local PlayLevelScene = class("PlayLevelScene", function()
     return display.newScene("PlayLevelScene")
@@ -61,6 +62,14 @@ function PlayLevelScene:ctor(levelId)
         :addEventListener(self.playDirector_.LEVEL_FAIL_EVENT, handler(self, self.playDirectorCb_))
         :addEventListener(self.playDirector_.TIPS_EVENT, handler(self, self.playDirectorCb_))
 
+    -- 技能
+    self.skillViews_ = {}
+    for i=1,5 do
+        self.skillViews_[i] = app:createView("StoneView", {stoneType = i, skillId = self.levelData_.skill[i]})
+            :pos(25 * i + 120 * (i - 0.5), 850)
+            :addTo(self)
+    end
+
     -- 剩余回合数
     local leftStep = self.playDirector_:getStepCount()
     self.stepLabel_ = display.newTTFLabel({text = tostring(leftStep), size = 55, color = display.COLOR_WHITE})
@@ -94,9 +103,10 @@ function PlayLevelScene:levelSuccess_()
     self.successView_ = app:createView("SuccessView", {levelData = self.levelData_, callback = handler(self, self.levelSuccessCb_)})
         :addTo(self, 1)
 
-    app:createView("SettleView", {settleData = self.playDirector_:getSettleData()})
-        :addTo(self.successView_)
-
+    if BEIBEI_TEST == true then
+        app:createView("SettleView", {settleData = self.playDirector_:getSettleData()})
+            :addTo(self.successView_)
+    end
 end
 
 function PlayLevelScene:levelSuccessCb_(tag)
@@ -106,7 +116,7 @@ function PlayLevelScene:levelSuccessCb_(tag)
     elseif tag == SuccessView.EventNext then
     -- 进入下一关，小心到了最后一关
         local stepCount = LevelCfg.getCount()
-        if self.levelData_.id == stepCount then
+        if tonumber(self.levelData_.id) == stepCount then
             -- 这是最后一关，回到选择关卡界面
             app:enterScene("ChooseLevelScene", nil, "flipy")
         else
@@ -143,8 +153,11 @@ end
 
 -- 
 function PlayLevelScene:levelPause_()
-    self.pauseView_ = app:createView("PauseView", {levelData = self.levelData_, callback = handler(self, self.levelPauseCb_)})
-        :addTo(self, 1)
+    self.directorVisible = self.directorVisible or false
+    self.playDirector_:setAllStoneVisible(self.directorVisible)
+    self.directorVisible = not self.directorVisible    
+    -- self.pauseView_ = app:createView("PauseView", {levelData = self.levelData_, callback = handler(self, self.levelPauseCb_)})
+    --     :addTo(self, 1)
 end
 
 function PlayLevelScene:levelPauseCb_(tag)

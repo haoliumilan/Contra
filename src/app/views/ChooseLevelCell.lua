@@ -140,7 +140,7 @@ function ChooseLevelCell:showOpenView()
 	local skillView = nil
 	for i=1,5 do
 		skillCfg = SkillCfg.get(skillArr[i])
-		skillView = display.newSprite(string.format(ImageName.StoneNorml, skillCfg.stoneType), -285+95*i, -230)
+		skillView = display.newSprite(string.format(ImageName.StoneNorml, i), -285+95*i, -230)
 			:addTo(self)
 			:scale(0.7)
 
