@@ -26,10 +26,10 @@ local configArr = {}
 configArr[1] = {
 	target = {
 		{3, 6},
-		{2, 36},
-		{1, 36},
+		{2, 60},
+		{1, 60},
 	},
-	step = 25,
+	step = 22,
 	name = "艾利之书",
 	detail = "神秘人：“完成作品。然后，你还有额外的任务要做。线索就在这个档案袋里面。",
 	award = "“头发多的秀技术，头发少的玩套路。你这种情况的话…..下一关玩套路！”",
@@ -72,9 +72,12 @@ configArr[1] = {
 configArr[2] = {
 	target = {
 		{1, 3},
+		{2, 60},
 		{3, 3},
+		{4, 60},
+		{5, 60},
 	},
-	step = 25,
+	step = 20,
 	name = "X档案",
 	detail = "书里面居然还有两份订单！难道这就是“额外的任务”？",
 	award = "我相信你已经具备回答这三个问题的能力了：“早上吃什么？中午吃什么？晚上吃什么？”",
@@ -116,6 +119,10 @@ configArr[2] = {
 
 configArr[3] = {
 	target = {
+		{1, 35},
+		{2, 35},
+		{3, 35},
+		{4, 35},
 		{7, 2},
 		{8, 2},
 	},
@@ -228,7 +235,7 @@ function LevelCfg.getCount()
 	if BEIBEI_TEST == true then
 		return #configArr-1
 	else
-		return #configArr
+		return #configArr-1
 	end
 end
 

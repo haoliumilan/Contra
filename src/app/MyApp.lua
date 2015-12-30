@@ -20,7 +20,7 @@ function MyApp:run()
     if BEIBEI_TEST then
         self:enterScene("MainScene")
     else
-        self:enterScene("PlayLevelScene", {4})
+        self:enterScene("MainScene")
     end
 
 end
