@@ -94,9 +94,10 @@ function PlayLevelScene:levelSuccess_()
     self.successView_ = app:createView("SuccessView", {levelData = self.levelData_, callback = handler(self, self.levelSuccessCb_)})
         :addTo(self, 1)
 
-    app:createView("SettleView", {settleData = self.playDirector_:getSettleData()})
-        :addTo(self.successView_)
-
+    if BEIBEI_TEST == true then
+        app:createView("SettleView", {settleData = self.playDirector_:getSettleData()})
+            :addTo(self.successView_)
+    end
 end
 
 function PlayLevelScene:levelSuccessCb_(tag)
@@ -106,7 +107,7 @@ function PlayLevelScene:levelSuccessCb_(tag)
     elseif tag == SuccessView.EventNext then
     -- 进入下一关，小心到了最后一关
         local stepCount = LevelCfg.getCount()
-        if self.levelData_.id == stepCount then
+        if tonumber(self.levelData_.id) == stepCount then
             -- 这是最后一关，回到选择关卡界面
             app:enterScene("ChooseLevelScene", nil, "flipy")
         else

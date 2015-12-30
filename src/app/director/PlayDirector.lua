@@ -256,6 +256,8 @@ function PlayDirector:onSelectStone_(event)
 end
 
 function PlayDirector:onClearStone_(event)
+	self.touchLayer_:setTouchEnabled(false)	
+
 	event.args[1] = event.args[1] or {}
 	local isClearSkill = event.args[1].isClearSkill or false
 
@@ -426,6 +428,11 @@ function PlayDirector:onResetStone_(event)
 					self:reorderChild(oneStone, 0)
 				end
 				oneStone:setStoneState(enStoneState.Normal, {isClearSkillEffect = true})
+			end
+
+			local oneCover = self.coverViews_[i][j]
+			if oneCover and oneCover:getIsSkillEffect() == true then
+				oneCover:setSkillEffect(false)
 			end
 		end
 	end
@@ -616,8 +623,6 @@ end
 
 -- 消除后，更新7x7矩阵
 function PlayDirector:updateMatrix_()
-	self.touchLayer_:setTouchEnabled(false)	
-
 	local pos1X, pos1Y, pos2X, pos2Y
 	local oneStone
 	local tempIndex
