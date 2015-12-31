@@ -35,12 +35,12 @@ configArr[2] = {
 
 -- 十字
 configArr[3] = {
-	direction = {3, 7}, effect = 1, icon = 3,
+	direction = {1, 3, 5, 7}, effect = 1, icon = 3,
 }
 
 -- 水平三
 configArr[4] = {
-	direction = {3, 7}, effect = 3, icon = 2,
+	direction = {1, 5}, effect = 3, icon = 2,
 }
 
 -- 垂直三

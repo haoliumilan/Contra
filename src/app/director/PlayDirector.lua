@@ -35,8 +35,6 @@ function PlayDirector:ctor(levelData)
 	self.levelData_ = levelData
 
 	self.stoneViews_ = {} -- stoneView 7x7 
-	self.wallXViews_ = {} -- stone之间的x轴墙 8x7
-	self.wallYViews_ = {} -- stone之间的y轴墙 7x8
 	self.coverViews_ = {} -- stone上面的盖子 7x7
 
 	self.skillDatas_ = {} 	-- 技能
@@ -116,13 +114,9 @@ function PlayDirector:setStateMachine_()
 	    -- 选中stone
 	    {name = "selectStone", from = "normal", to = "stoneSelect" },
 	    -- 消除stone
-	    {name = "clearStone", from = {"stoneSelect", "skillUse"}, to = "stoneClear" },
+	    {name = "clearStone", from = {"stoneSelect"}, to = "stoneClear" },
 	    -- 重置stone
-	    {name = "resetStone", from = {"stoneSelect", "stoneClear", "skillUse", "skillSelect"}, to = "normal" },
-	    -- 选中skill
-	    {name = "selectSkill", from = {"normal", "skillSelect", "skillUse"}, to = "skillSelect" },
-	    -- 确认技能
-	    {name = "useSkill", from = {"skillSelect", "skillUse"}, to = "skillUse" },    	    
+	    {name = "resetStone", from = {"stoneSelect", "stoneClear"}, to = "normal" },
 	}
 
 	-- 设定状态机的默认回调
@@ -132,8 +126,6 @@ function PlayDirector:setStateMachine_()
 	    onselectStone = handler(self, self.onSelectStone_),
 	    onclearStone = handler(self, self.onClearStone_),
 	    onresetStone = handler(self, self.onResetStone_),
-	    onselectSkill = handler(self, self.onSelectSkill_),
-	    onuseSkill = handler(self, self.onUseSkill_),
 	}
 
 	self.fsm__:setupState({
@@ -195,37 +187,6 @@ function PlayDirector:onStart_(event)
 		end
 	end
 
-	-- 墙 x轴
-	local wallXCfg = self.levelData_.wallX or {}
-	for i=1,PlayDirector.SMaxRow+1 do
-		self.wallXViews_[i] = {}
-		wallXCfg[i] = wallXCfg[i] or {}
-		for j=1,PlayDirector.SMaxCol do
-			if wallXCfg[i][j] and wallXCfg[i][j] > 0 then
-				posX, posY = self:getWallXPosByIndex_(i, j)
-				self.wallXViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallXCfg[i][j]})
-					:addTo(self, 2)
-					:pos(posX, posY)
-			end
-		end
-	end
-
-	-- 墙 y轴
-	local wallYCfg = self.levelData_.wallY or {}
-	for i=1,PlayDirector.SMaxRow do
-		self.wallYViews_[i] = {}
-		wallYCfg[i] = wallYCfg[i] or {}
-		for j=1,PlayDirector.SMaxCol+1 do
-			if wallYCfg[i][j] and wallYCfg[i][j] > 0 then
-				posX, posY = self:getWallYPosByIndex_(i, j)
-				self.wallYViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = wallYCfg[i][j]})
-					:addTo(self, 2)
-					:pos(posX, posY)
-					:rotation(90)
-			end
-		end
-	end
-
 	self:updateMatrix_()
 end
 
@@ -238,7 +199,7 @@ function PlayDirector:onSelectStone_(event)
 
 	for i,v in ipairs(self.selectStones_) do
 		self:reorderChild(v, 1)
-		v:setStoneState(enStoneState.Highlight, {isFade = true})
+		v:setStoneState(enStoneState.Highlight)
 		if v:getSkillData() ~= nil then
 			self:showSkillEffect_(v)
 		end
@@ -265,8 +226,6 @@ function PlayDirector:onClearStone_(event)
 	local clearColors = {} -- 每种颜色消除的数量
 	local splashStones = {} -- 被溅射到的stone
 	local splashCovers = {} -- 被溅射到的cover
-	local splashWallXs = {} -- 溅射到的wallX
-	local splashWallYs = {} -- 溅射到的wallY
 	for i=1,enStoneType.Max-1 do
 		clearColors[i] = 0
 	end
@@ -276,31 +235,12 @@ function PlayDirector:onClearStone_(event)
 		local rowIndex, colIndex = centerStone:getRowColIndex()
 		for i=1,#Direction4ValueArr do
 			-- 溅射到的墙
-			local isSplashWall = false
 			local newRowIndex = rowIndex + math.max(0, Direction4ValueArr[i][2])
 			local newColIndex = colIndex + math.max(0, Direction4ValueArr[i][1])
-			local splashWall
-			if i%2==1 then
-				splashWall = self.wallYViews_[newRowIndex][newColIndex]
-				if splashWall and splashWall:getIsSkillEffect() == false then
-					isSplashWall = true
-					if splashWall:getIsSplash() == true then
-						splashWallYs[splashWall] = true
-					end
-				end
-			else
-				splashWall = self.wallXViews_[newRowIndex][newColIndex]
-				if splashWall and splashWall:getIsSkillEffect() == false then
-					isSplashWall = true
-					if splashWall:getIsSplash() == true then
-						splashWallXs[splashWall] = true
-					end
-				end
-			end
 
 			newRowIndex = rowIndex + Direction4ValueArr[i][2]
 			newColIndex = colIndex + Direction4ValueArr[i][1]
-			if isSplashWall == false and self:getIsInMatrix_(newRowIndex, newColIndex) == true then
+			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local splashCover = self.coverViews_[newRowIndex][newColIndex]
 				if splashCover then
 					if splashCover:getIsSkillEffect() == false and splashCover:getIsSplash() == true then
@@ -321,9 +261,8 @@ function PlayDirector:onClearStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() == enStoneState.Highlight 
-				and oneStone:getIsSkillEffect() == true then
-				print("onClear_1", i, j, table.indexof(self.curEffectStones_, oneStone))
+			if oneStone and oneStone:getStoneState() == enStoneState.Highlight then
+				print(i, j, oneStone:getIsSkillEffect())
 			end
 			if oneStone and oneStone:getStoneState() == enStoneState.Highlight 
 				and oneStone:getIsSkillEffect() == false then
@@ -345,6 +284,13 @@ function PlayDirector:onClearStone_(event)
 
 	-- 技能波及的
 	for i,v in ipairs(self.curEffectStones_) do
+		if v:getSkillData() then
+			local skillId = v:getSkillData().id
+			self.usedSkills_[skillId] = self.usedSkills_[skillId] or 0
+				self.usedSkills_[skillId] = self.usedSkills_[skillId] + 1
+				isClearSkill = true
+		end
+
 		clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
 		self:clearOne_(v)						
 	end
@@ -367,28 +313,10 @@ function PlayDirector:onClearStone_(event)
 	-- 	end
 	-- end
 
-	-- -- 溅射到的wallX
-	-- splashArr = table.keys(splashWallXs)
-	-- for i,v in ipairs(splashArr) do
-	-- 	if v:splash() == true then
-	-- 		clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-	-- 		self:clearOne_(v)
-	-- 	end
-	-- end
-
-	-- -- 溅射到的wallY
-	-- splashArr = table.keys(splashWallYs)
-	-- for i,v in ipairs(splashArr) do
-	-- 	if v:splash() == true then
-	-- 		clearColors[v:getStoneType()] = clearColors[v:getStoneType()] + 1
-	-- 		self:clearOne_(v)
-	-- 	end
-	-- end
-
 	-- 消除产生技能
 	self.newSkills_ = {}
 	for i=1,5 do
-		self.newSkills_[i] = math.floor(clearColors[i]/self.skillDatas_[i].need)
+		self.newSkills_[i] = math.min(math.floor(clearColors[i]/self.skillDatas_[i].need), 3) 
 	end
 
 	for i=1,enStoneType.Max-1 do
@@ -399,7 +327,7 @@ function PlayDirector:onClearStone_(event)
 	self:dispatchEvent({name = PlayDirector.CLEAR_STONE_EVENT})
 	local delay = 0.2
 	if isClearSkill == true then
-		delay = 1.0
+		delay = 0.5
 	end
 	self:performWithDelay(function()
 		self.fsm__:doEvent("resetStone", {is_clear = true})
@@ -424,7 +352,7 @@ function PlayDirector:onResetStone_(event)
 				if oneStone:getStoneState() == enStoneState.Highlight then
 					self:reorderChild(oneStone, 0)
 				end
-				oneStone:setStoneState(enStoneState.Normal)
+				oneStone:setStoneState(enStoneState.Normal, {isClearSkillEffect = true})
 			end
 
 			local oneCover = self.coverViews_[i][j]
@@ -434,54 +362,10 @@ function PlayDirector:onResetStone_(event)
 		end
 	end
 
-	-- 墙 x轴
-	local oneWall = nil	
-	for i=1,PlayDirector.SMaxRow+1 do
-		for j=1,PlayDirector.SMaxCol do
-			oneWall = self.wallXViews_[i][j]
-			if oneWall and oneWall:getIsSkillEffect() == true then
-				oneWall:setSkillEffect(false)
-			end
-		end
-	end
-	-- 墙 y轴
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol+1 do
-			oneWall = self.wallYViews_[i][j]
-			if oneWall and oneWall:getIsSkillEffect() == true then
-				oneWall:setSkillEffect(false)
-			end
-		end
-	end
-
 	-- 如果消除了，就要更新Matrix
 	if args.is_clear == true then
 		self:updateMatrix_()
 	end
-end
-
-function PlayDirector:onSelectSkill_(event)
-	self.coverLayer_:setVisible(true)
-	self.selectSkill_ = event.args[1]
-
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			local oneStone = self.stoneViews_[i][j]
-			if oneStone then
-				if oneStone:getStoneType() ~= self.selectSkill_:getStoneType() then
-					oneStone:setStoneState(enStoneState.Disable, {isClearSkillEffect = true})
-				else
-					oneStone:setStoneState(enStoneState.Highlight, {isClearSkillEffect = true})
-					self:reorderChild(oneStone, 1)
-				end
-			end
-		end
-	end
-
-end
-
-function PlayDirector:onUseSkill_(event)
-
 end
 
 -- 技能按钮
@@ -509,13 +393,7 @@ function PlayDirector:updateMatrix3_()
 			return nil
 		end
 
-		-- 如果有wall阻隔，不能掉下去
-		if self:getIsLinkByWall(rowIndex, colIndex, -1, valueIndex) == false then
-			return nil
-		end
-
-		if valueIndex ~= 0 and self:getIsSelectStone_(self.stoneViews_[rowIndex][colIndex+valueIndex]) == true
-				and self.wallXViews_[rowIndex][colIndex+valueIndex] == nil then
+		if valueIndex ~= 0 and self:getIsSelectStone_(self.stoneViews_[rowIndex][colIndex+valueIndex]) == true then
 			return nil
 		end
 
@@ -569,7 +447,7 @@ function PlayDirector:updateMatrix3_()
 		for j=1,PlayDirector.SMaxCol do
 			if i == PlayDirector.SMaxRow+1 then
 				oneStone = self.stoneViews_[i-1][j]
-				if oneStone == nil and self.wallXViews_[i][j] == nil and self.coverViews_[i-1][j] == nil then
+				if oneStone == nil then
 					addNewStone(j)
 				end
 			else
@@ -608,11 +486,6 @@ function PlayDirector:updateMatrix_()
 				pos1X, pos1Y = self:getStonePosByIndex_(i, j)
 
 				while oneStone == nil do
-					if self.wallXViews_[i+tempIndex+1][j] ~= nil then
-						-- 有障碍
-						break
-					end
-
 					if i + tempIndex == PlayDirector.SMaxRow then
 						break
 					else
@@ -621,11 +494,7 @@ function PlayDirector:updateMatrix_()
 					end
 				end
 
-				if self.wallXViews_[i+tempIndex+1][j] ~= nil then
-					-- 如果有障碍就停下来吧
-					oneStone = nil
-					isFixed = true
-				elseif oneStone == nil then
+				if oneStone == nil then
 				-- 说明当前stone上面也没有stone了，要重新创建
 					addStoneArr[j] = addStoneArr[j] or 0
 					addStoneArr[j] = addStoneArr[j] + 1
@@ -670,9 +539,8 @@ function PlayDirector:onTouch_(event)
     -- print(label)
 
     local oneStone = self:getStoneByPos_(event.x, event.y)
-    local oneSkill = self:getSkillByPos_(event.x, event.y)
     local state = self.fsm__:getState()
-    if oneStone or oneSkill then
+    if oneStone then
     	self:dispatchEvent({name = PlayDirector.TIPS_EVENT})
     end
 
@@ -691,7 +559,6 @@ function PlayDirector:onTouch_(event)
 
 	    	end
     	elseif state == "stoneSelect" then
-    		print("#self.selectStones_", #self.selectStones_)
     		if oneStone:getStoneState() == enStoneState.Highlight and #self.selectStones_ > 1 then
 	    		-- 消除
 	    		self:useStepCount_()
@@ -727,21 +594,6 @@ function PlayDirector:onTouch_(event)
 	    	self.fsm__:doEvent("resetStone")
 
     	end
-
-    elseif oneSkill then
-    	-- 选中了skill
-    	if state == "normal" or state == "skillSelect" or state == "skillUse" then
-    		if oneSkill ~= self.selectSkill_ and oneSkill:getCurCount() >= oneSkill:getNeedCount() then
-    			self:dispatchEvent({name = PlayDirector.TIPS_EVENT, tips = TipsView.TxtUseSkill})
-	    		self.fsm__:doEvent("selectSkill", oneSkill)
-	    	else
-
-	    	end
-    	else
-    		-- 取消选中
-	    	self.fsm__:doEvent("resetStone")
-
-    	end
     else
     	if state ~= "normal" then
 	    	self.fsm__:doEvent("resetStone")
@@ -754,23 +606,6 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect_(oneStone)
-	-- 对一个墙的技能效果 <-o-> 
-	--       -- --   -- -- 
-	-- 		|  |  |o|  |  |
-	-- 		 -- -- 	 -- --
-	local function showOneWallEffect(isX, rowIndex, colIndex)
-		local oneWall = nil
-		if isX == true then
-			oneWall = self.wallXViews_[rowIndex][colIndex]
-		else
-			oneWall = self.wallYViews_[rowIndex][colIndex]
-		end
-		if oneWall and oneWall:getIsSplash() == true and oneWall:getIsSkillEffect() == false then
-			table.insert(self.curEffectStones_, oneWall)
-			oneWall:setSkillEffect(true)
-		end
-	end
-
 	-- 对一个格子的技能效果
 	local function showOneIndexEffect(rowIndex, colIndex)
 		local effectCover = self.coverViews_[rowIndex][colIndex]
@@ -792,13 +627,6 @@ function PlayDirector:showSkillEffect_(oneStone)
 				end
 			end
 		end
-
-		-- 当前格子上下左右四个墙
-		showOneWallEffect(true, rowIndex+1, colIndex)
-		showOneWallEffect(true, rowIndex, colIndex)
-		showOneWallEffect(false, rowIndex, colIndex+1)
-		showOneWallEffect(false, rowIndex, colIndex)
-
 	end
 
 	-- 一个方向上的技能效果
@@ -809,15 +637,7 @@ function PlayDirector:showSkillEffect_(oneStone)
 			newColIndex = colIndex + directionValue[1]*j
 
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
-				-- wall
 				showOneIndexEffect(newRowIndex, newColIndex)
-			else
-				--  wallX多一行、wallY多一列
-				if newRowIndex == PlayDirector.SMaxRow + 1 then
-					showOneWallEffect(true, newRowIndex, newColIndex)
-				elseif newColIndex == PlayDirector.SMaxCol + 1 then
-					showOneWallEffect(false, newRowIndex, newColIndex)
-				end
 			end
 		end
 	end
@@ -858,27 +678,6 @@ function PlayDirector:getStoneByPos_(posX, posY)
 	return self.stoneViews_[rowIndex][colIndex]
 end
 
--- 通过坐标获取Skill
-function PlayDirector:getSkillByPos_(posX, posY)
-	do return nil end
-	local realSide = PlayDirector.SkSide + PlayDirector.SkSpace
-
-	if posX < PlayDirector.SkOriPosX + PlayDirector.SkSpace * 0.5
-		or posX > PlayDirector.SkOriPosX + PlayDirector.SkSpace * 0.5 + realSide * 5 then
-		return nil
-	end
-
-	if posY < PlayDirector.SkOriPosY - PlayDirector.SkSide * 0.5
-		or posY > PlayDirector.SkOriPosY + PlayDirector.SkSide * 0.5 then
-		return nil
-	end
-
-	local index = (posX - PlayDirector.SkOriPosX - PlayDirector.SkSpace * 0.5) / realSide
-	index = math.floor(index) + 1
-
-	return self.skillDatas_[index]
-end
-
 -- 判断两个stone是否相邻
 function PlayDirector:getIsRelate_(stone1, stone2)
 	local rowIndex1, colIndex1 = stone1:getRowColIndex()
@@ -902,31 +701,6 @@ function PlayDirector:getIsInMatrix_(rowIndex, colIndex)
 	end
 end
 
--- 判断两个stone之间的wall是否阻止他们相连, wall和不能移动的stone也可以阻止相连
-function PlayDirector:getIsLinkByWall(rowIndex, colIndex, rowValue, colValue)
-	if colValue == 0 then
-		if self.wallXViews_[rowIndex+math.max(0, rowValue)][colIndex] then
-			return false
-		end
-	elseif rowValue == 0 then
-	   	if self.wallYViews_[rowIndex][colIndex+math.max(0, colValue)] then
-			return false
-		end
-	else
-		-- 右上、右下、左上、左下
-		if (self:getIsSelectStone_(self.stoneViews_[rowIndex+rowValue][colIndex]) == false
-			or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex]
-			or self.wallYViews_[rowIndex+rowValue][colIndex+math.max(colValue, 0)])
-			and (self:getIsSelectStone_(self.stoneViews_[rowIndex][colIndex+colValue]) == false
-				or self.wallXViews_[rowIndex+math.max(rowValue, 0)][colIndex+colValue]
-				or self.wallYViews_[rowIndex][colIndex+math.max(colValue, 0)]) then
-			return false
-		end
-	end
-
-	return true
-end
-
 -- 获取一个stone可以连接的所有stone,
 function PlayDirector:getCanLinkStones_(startStone, isCheckStoneType)
 	if startStone == nil then
@@ -942,8 +716,7 @@ function PlayDirector:getCanLinkStones_(startStone, isCheckStoneType)
 		for i=1,#Direction4ValueArr do
 			local newRowIndex = rowIndex + Direction4ValueArr[i][2]
 			local newColIndex = colIndex + Direction4ValueArr[i][1]
-			if self:getIsInMatrix_(newRowIndex, newColIndex) == true 
-				and self:getIsLinkByWall(rowIndex, colIndex, Direction4ValueArr[i][2], Direction4ValueArr[i][1]) == true then
+			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
 			 	if self:getIsSelectStone_(relateStone) == true 
 			 		and (relateStone:getStoneType() == oneStone:getStoneType() or isCheckStoneType == false) 
@@ -963,20 +736,6 @@ end
 -- 获取矩阵的一个珠子的坐标
 function PlayDirector:getStonePosByIndex_(rowIndex, colIndex)
 	local posX = PlayDirector.SOriPosX + PlayDirector.SSpace * colIndex + PlayDirector.SSide * (colIndex - 0.5)
-	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 0.5)
-	return posX, posY
-end
-
--- 获取墙X的坐标
-function PlayDirector:getWallXPosByIndex_(rowIndex, colIndex)
-	local posX = PlayDirector.SOriPosX + PlayDirector.SSpace * colIndex + PlayDirector.SSide * (colIndex - 0.5)
-	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 1) - 2
-	return posX, posY
-end
-
--- 获取墙Y的坐标
-function PlayDirector:getWallYPosByIndex_(rowIndex, colIndex)
-	local posX = PlayDirector.SOriPosX + PlayDirector.SSpace * colIndex + PlayDirector.SSide * (colIndex - 1) - 2
 	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 0.5)
 	return posX, posY
 end
@@ -1182,7 +941,7 @@ function PlayDirector:getIsSelectStone_(oneStone)
 	return oneStone:getIsSelected()
 end
 
--- 消除一个stone、wall、cover
+-- 消除一个stone、cover
 function PlayDirector:clearOne_(oneValue)
 	if oneValue then
 		local table 
@@ -1190,12 +949,6 @@ function PlayDirector:clearOne_(oneValue)
 			table = self.stoneViews_
 		elseif oneValue:getStoneType2() == enStoneType2.Cover then
 			table = self.coverViews_
-		elseif oneValue:getStoneType2() == enStoneType2.Wall then
-			if oneValue:getRotation() == 90 then
-				table = self.wallYViews_
-			else
-				table = self.wallXViews_
-			end
 		end
 
 		local rowIndex, colIndex = oneValue:getRowColIndex()
@@ -1248,7 +1001,7 @@ function PlayDirector:createSkill_()
 				:pos(25*stoneType+120*(stoneType-0.5), 850)
 		newStone:runAction(transition.sequence({
 				cc.DelayTime:create(0.1*skillIndex),
-				cc.MoveTo:create(PlayDirector.TimeSkillDrop, cc.p(posX, posY)),
+				cc.EaseIn:create(cc.MoveTo:create(PlayDirector.TimeSkillDrop, cc.p(posX, posY)), 2.5),
 				cc.CallFunc:create(function()
 					targetStone:removeFromParent()
 					self.stoneViews_[rowIndex][colIndex] = nil
@@ -1277,18 +1030,6 @@ function PlayDirector:createSkill_()
 		end
 	end
 
-end
-
-function PlayDirector:setAllStoneVisible(visible)
-	local oneStone
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone then
-				oneStone:setVisible(visible)
-			end
-		end
-	end
 end
 
 

@@ -153,11 +153,8 @@ end
 
 -- 
 function PlayLevelScene:levelPause_()
-    self.directorVisible = self.directorVisible or false
-    self.playDirector_:setAllStoneVisible(self.directorVisible)
-    self.directorVisible = not self.directorVisible    
-    -- self.pauseView_ = app:createView("PauseView", {levelData = self.levelData_, callback = handler(self, self.levelPauseCb_)})
-    --     :addTo(self, 1)
+    self.pauseView_ = app:createView("PauseView", {levelData = self.levelData_, callback = handler(self, self.levelPauseCb_)})
+        :addTo(self, 1)
 end
 
 function PlayLevelScene:levelPauseCb_(tag)

@@ -1681,7 +1681,7 @@
 					100000000,
 				);
 				PRODUCT_NAME = "Contra iOS";
-				PROVISIONING_PROFILE = "d7e37b04-4f97-4856-b326-8e3eb890b852";
+				PROVISIONING_PROFILE = "e674171d-a927-4342-90e2-74729a652117";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos/platform/ios\" \"$(QUICK_V3_ROOT)/external/curl/include/ios\"";
@@ -1738,7 +1738,7 @@
 					100000000,
 				);
 				PRODUCT_NAME = "Contra iOS";
-				PROVISIONING_PROFILE = "d7e37b04-4f97-4856-b326-8e3eb890b852";
+				PROVISIONING_PROFILE = "e674171d-a927-4342-90e2-74729a652117";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) \"$(QUICK_V3_ROOT)/cocos/platform/ios\" \"$(QUICK_V3_ROOT)/external/curl/include/ios\"";
