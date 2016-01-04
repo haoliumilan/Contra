@@ -35,29 +35,10 @@ configArr[5] = { -- 紫色
 	is_selected = true, is_splash = false, hit_count = 1, type2 = enStoneType2.Stone,
 }
 
-configArr[6] = { -- 铁块
-	is_selected = false, is_splash = false,hit_count = 1, type2 = enStoneType2.Stone,
+configArr[6] = { -- 彩色
+	is_selected = true, is_splash = false, hit_count = 1, type2 = enStoneType2.Stone,
 }
 
-configArr[7] = { -- 木头A
-	is_selected = false, is_splash = true, hit_count = 2, type2 = enStoneType2.Stone,
-}
-
-configArr[8] = { -- 木头B
-	is_selected = false, is_splash = true, hit_count = 2, type2 = enStoneType2.Stone,
-}
-
-configArr[9] = { -- 铁墙
-	is_selected = false, is_splash = false, hit_count = 1, type2 = enStoneType2.Wall,	
-}
-
-configArr[10] = { -- 木墙
-	is_selected = false, is_splash = true, hit_count = 2, type2 = enStoneType2.Wall,
-}
-
-configArr[11] = { -- 冰盖子
-	is_selected = false, is_splash = true, hit_count = 2, type2 = enStoneType2.Cover,	
-}
 
 function StoneCfg.get(stoneId)
     assert(stoneId >= 1 and stoneId <= #configArr, string.format("StoneCfg.get() - invalid stoneId %s", tostring(stoneId)))

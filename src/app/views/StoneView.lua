@@ -47,17 +47,6 @@ end
 
 ---- property
 
--- 如果溅射后直接消除，返回true
-function StoneView:splash()
-    if self.curHitCount_ > 1 then
-        self.curHitCount_ = self.curHitCount_ - 1
-        self:updateSprite_()
-        return false
-    else
-        return true
-    end
-end
-
 function StoneView:getIsSplash()
     return self.stoneCfg_.is_splash
 end
@@ -66,8 +55,50 @@ function StoneView:getStoneType2()
     return self.stoneCfg_.type2
 end
 
+function StoneView:getStoneState()
+    return self.stoneState_
+end
+
+function StoneView:getStoneType()
+    return self.stoneType_
+end
+
+function StoneView:getSkillData()
+    return self.skillData_
+end
+
+function StoneView:getIsSkillEffect()
+    return self.isSkillEffect_
+end
+
+
+function StoneView:setSkillEffect(isSkillEffect)
+    self.isSkillEffect_ = isSkillEffect
+    self:updateSprite_()
+end
+
 function StoneView:getIsSelected()
     return self.stoneCfg_.is_selected
+end
+
+function StoneView:getRowColIndex()
+    return self.rowIndex_, self.colIndex_
+end
+
+------------------------------------------
+
+function StoneView:setProperty(data)
+    self.rowIndex_ = data.rowIndex or self.rowIndex_
+    self.colIndex_ = data.colIndex or self.colIndex_   
+    if data.stoneType then
+        self.stoneType_ = data.stoneType or self.stoneType_
+        self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
+    end
+    if data.skillId then
+        self.skillData_ = SkillCfg.get(data.skillId)
+    end
+
+    self:updateSprite_()
 end
 
 function StoneView:setStoneState(stoneState, data)
@@ -80,45 +111,27 @@ function StoneView:setStoneState(stoneState, data)
     self:updateSprite_()
 end
 
-function StoneView:getStoneState()
-    return self.stoneState_
-end
-
-function StoneView:setStoneType(stoneType)
-    self.stoneType_ = stoneType
-    self.stoneCfg_ = StoneCfg.get(self.stoneType_ )
-end
-
-function StoneView:getStoneType()
-    return self.stoneType_
-end
-
 function StoneView:setRowColIndex(rowIndex, colIndex)
     self.rowIndex_ = rowIndex
     self.colIndex_ = colIndex
     self.label_:setString(string.format("%d, %d", self.rowIndex_, self.colIndex_))
 end
 
-function StoneView:getRowColIndex()
-    return self.rowIndex_, self.colIndex_
-end
-
 function StoneView:setSkillData(skillData)
-    self.skillData_ = skillData
-    self:updateSprite_()
+    self.skillData_ = nil
 end
 
-function StoneView:getSkillData()
-    return self.skillData_
-end
+------------------------------------------
 
-function StoneView:setSkillEffect(isSkillEffect)
-    self.isSkillEffect_ = isSkillEffect
-    self:updateSprite_()
-end
-
-function StoneView:getIsSkillEffect()
-    return self.isSkillEffect_
+-- 如果溅射后直接消除，返回true
+function StoneView:splash()
+    if self.curHitCount_ > 1 then
+        self.curHitCount_ = self.curHitCount_ - 1
+        self:updateSprite_()
+        return false
+    else
+        return true
+    end
 end
 
 ----

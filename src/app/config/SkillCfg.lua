@@ -24,13 +24,13 @@ local configArr = {}
 -- 水平一
 configArr[1] = {
 	direction = {1, 5}, effect = 1, icon = 1, need = 4, 
-	merge = {{add = 1, to = 4}, {add = 2, to = 3}},
+	add = {1, 2}, to = {4, 3},
 }
 
 -- 垂直一
 configArr[2] = {
 	direction = {3, 7}, effect = 1, icon = 1, need = 4, 
-	merge = {{add = 1, to = 3}, {add = 2, to = 5}},
+	add = {1, 2}, to = {3, 5},
 }
 
 -- 十字

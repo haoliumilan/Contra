@@ -23,6 +23,7 @@ PlayDirector.SSide = 72 -- 珠子的边长
 PlayDirector.TimeDrop = 0.1 -- 珠子掉落一个格子用的时间
 PlayDirector.TimeUpdatePos = 0.2 -- stone刷新位置的时间
 PlayDirector.TimeSkillDrop = 0.5 -- 技能出来的时间
+PlayDirector.TimeComposeSkill = 0.2 -- 技能合成的时间
 
 -- 定义事件
 PlayDirector.CHANGE_STEP_EVENT = "CHANGE_STEP_EVENT"
@@ -261,9 +262,6 @@ function PlayDirector:onClearStone_(event)
 	for i=1,PlayDirector.SMaxRow do
 		for j=1,PlayDirector.SMaxCol do
 			oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() == enStoneState.Highlight then
-				print(i, j, oneStone:getIsSkillEffect())
-			end
 			if oneStone and oneStone:getStoneState() == enStoneState.Highlight 
 				and oneStone:getIsSkillEffect() == false then
 				findSplashStone(oneStone)
@@ -606,6 +604,13 @@ end
 
 -- 显示技能效果
 function PlayDirector:showSkillEffect_(oneStone)
+	if oneStone:getIsSkillEffect() == true then
+		return
+	end
+
+	table.insert(self.curEffectStones_, oneStone)
+	oneStone:setSkillEffect(true)
+
 	-- 对一个格子的技能效果
 	local function showOneIndexEffect(rowIndex, colIndex)
 		local effectCover = self.coverViews_[rowIndex][colIndex]
@@ -616,21 +621,20 @@ function PlayDirector:showSkillEffect_(oneStone)
 			end
 		else
 			local effectStone = self.stoneViews_[rowIndex][colIndex]
-			if effectStone and effectStone:getIsSkillEffect() == false and 
-				(self:getIsSelectStone_(effectStone) == true or effectStone:getIsSplash() == true) then
-				table.insert(self.curEffectStones_, effectStone)
-				effectStone:setSkillEffect(true)
-
+			if effectStone and effectStone:getIsSkillEffect() == false and self:getIsSelectStone_(effectStone) == true  then
 				if effectStone:getSkillData() ~= nil then
 				-- 技能触发技能
 					self:showSkillEffect_(effectStone)
+				else
+					table.insert(self.curEffectStones_, effectStone)
+					effectStone:setSkillEffect(true)
 				end
 			end
 		end
 	end
 
 	-- 一个方向上的技能效果
-	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+	local function showOneDirectionEffect(directionValue, rowIndex, colIndex)
 		local newRowIndex, newColIndex
 		for j=1,8 do
 			newRowIndex = rowIndex + directionValue[2]*j
@@ -638,6 +642,8 @@ function PlayDirector:showSkillEffect_(oneStone)
 
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				showOneIndexEffect(newRowIndex, newColIndex)
+			else
+				break
 			end
 		end
 	end
@@ -645,14 +651,15 @@ function PlayDirector:showSkillEffect_(oneStone)
 	local rowIndex, colIndex = oneStone:getRowColIndex()
 	local skillData = oneStone:getSkillData()
 	local direction = skillData.direction
-	local effect = skillData.effect
 	local directionValue
 	for i,v in ipairs(direction) do
 		directionValue = Direction8ValueArr[v]
-		showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
+		showOneDirectionEffect(directionValue, rowIndex, colIndex)
+		if skillData.effect and skillData.effect == 3 then
+			
+		end
 	end
 
-	return stoneArr
 end
 
 -- 通过坐标获取Stone
@@ -719,7 +726,9 @@ function PlayDirector:getCanLinkStones_(startStone, isCheckStoneType)
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				local relateStone = self.stoneViews_[newRowIndex][newColIndex]
 			 	if self:getIsSelectStone_(relateStone) == true 
-			 		and (relateStone:getStoneType() == oneStone:getStoneType() or isCheckStoneType == false) 
+			 		and (relateStone:getStoneType() == oneStone:getStoneType() 
+			 			or relateStone:getStoneType() == enStoneType.Multicolor 
+			 			or isCheckStoneType == false) 
 			 		and canLinkStones[relateStone] ~= true then
 					canLinkStones[relateStone] = true
 					findCanLinkStone(relateStone)
@@ -759,6 +768,7 @@ end
 
 -- 新的一回合
 function PlayDirector:newStep_()
+	-- 判断是否生成技能
 	local noSkill = true
 	for i=1,5 do
 		if self.newSkills_[i] and self.newSkills_[i] > 0 then
@@ -772,13 +782,20 @@ function PlayDirector:newStep_()
 		return
 	end
 
-	if self:checkResult_() == true then
+	-- 判断是否合成技能
+	if self:composeSkill_() then
+		self:performWithDelay(function()
+			self:updateMatrix_()
+		end, PlayDirector.TimeComposeSkill+0.2)
+		return
+	end
+
 	-- 关卡结束了
+	if self:checkResult_() == true then
 		return
 	end
 
 	if self:checkIsCanClear_() == true then
-		print("PlayDirector:newStep_()")
 		self.touchLayer_:setTouchEnabled(true)	
 	else
 		-- 不能消除，重新排列
@@ -1006,6 +1023,7 @@ function PlayDirector:createSkill_()
 					targetStone:removeFromParent()
 					self.stoneViews_[rowIndex][colIndex] = nil
 					self.stoneViews_[rowIndex][colIndex] = newStone
+
 					if newStone == self.finalNewSkill_ then
 					-- 最后一个技能，可以下一步了
 						self.newSkills_ = {}
@@ -1030,6 +1048,70 @@ function PlayDirector:createSkill_()
 		end
 	end
 
+end
+
+-- 合成技能
+function PlayDirector:composeSkill_()
+	local hasCompose = false
+	for i=1,PlayDirector.SMaxRow do
+		for j=1,PlayDirector.SMaxCol do
+			oneStone = self.stoneViews_[i][j]
+			if oneStone and oneStone:getSkillData() and self:oneComposeSkill_(oneStone) then
+				hasCompose = true
+			end
+		end
+	end
+	return hasCompose
+end
+
+function PlayDirector:oneComposeSkill_(skillStone)
+	local addSkills = skillStone:getSkillData().add or {}
+	local toSkills = skillStone:getSkillData().to or {}
+	if #addSkills == 0 or #addSkills ~= #toSkills then
+		return false
+	end
+
+	local rowIndex, colIndex = skillStone:getRowColIndex()
+	local oneStone = nil
+	local skillIndex = nil
+	local newRowIndex, newColIndex
+
+	-- 遍历周围的四个stone，看是否有可以合并的技能
+	for i=1,#Direction4ValueArr do
+		newRowIndex = rowIndex + Direction4ValueArr[i][2]
+		newColIndex = colIndex + Direction4ValueArr[i][1]
+		if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
+			oneStone = self.stoneViews_[newRowIndex][newColIndex]
+			if self:getIsSelectStone_(oneStone) == true and oneStone:getSkillData() ~= nil then
+		 		skillIndex = table.indexof(addSkills, tonumber(oneStone:getSkillData().id))
+		 		if skillIndex then
+			 		break
+				end
+			end
+		end
+	end
+
+	if skillIndex then
+		local posX, posY = self:getStonePosByIndex_(rowIndex, colIndex)
+		self:reorderChild(oneStone, 1)
+		self.stoneViews_[rowIndex][colIndex] = nil
+		self.stoneViews_[newRowIndex][newColIndex] = nil
+		oneStone:stopAllActions()
+		oneStone:runAction(transition.sequence({
+			cc.MoveTo:create(PlayDirector.TimeComposeSkill, cc.p(posX, posY)),
+			cc.CallFunc:create(function()
+				skillStone:removeFromParent()
+				skillStone = nil
+				self.stoneViews_[rowIndex][colIndex] = oneStone
+				oneStone:setProperty({rowIndex = rowIndex, colIndex = colIndex, stoneType = enStoneType.Multicolor,
+					skillId = toSkills[skillIndex]})
+				self:reorderChild(oneStone, 0)
+			end)
+			}))
+		return true
+	else
+		return false
+	end
 end
 
 
