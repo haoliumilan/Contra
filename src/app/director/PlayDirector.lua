@@ -634,12 +634,16 @@ function PlayDirector:showSkillEffect_(oneStone)
 	end
 
 	-- 一个方向上的技能效果
-	local function showOneDirectionEffect(directionValue, rowIndex, colIndex)
+	local function showOneDirectionEffect(directionValue, rowIndex, colIndex, effect)
 		local newRowIndex, newColIndex
-		for j=1,8 do
+		local jStart = 1
+		if effect and effect == 3 then
+			jStart = 0
+		end
+
+		for j=jStart,8 do
 			newRowIndex = rowIndex + directionValue[2]*j
 			newColIndex = colIndex + directionValue[1]*j
-
 			if self:getIsInMatrix_(newRowIndex, newColIndex) == true then
 				showOneIndexEffect(newRowIndex, newColIndex)
 			else
@@ -656,7 +660,13 @@ function PlayDirector:showSkillEffect_(oneStone)
 		directionValue = Direction8ValueArr[v]
 		showOneDirectionEffect(directionValue, rowIndex, colIndex)
 		if skillData.effect and skillData.effect == 3 then
-			
+			if v == 1 or v == 5 then
+				showOneDirectionEffect(directionValue, rowIndex+1, colIndex, skillData.effect)
+				showOneDirectionEffect(directionValue, rowIndex-1, colIndex, skillData.effect)				
+			elseif v == 3 or v == 7 then
+				showOneDirectionEffect(directionValue, rowIndex, colIndex+1, skillData.effect)
+				showOneDirectionEffect(directionValue, rowIndex, colIndex-1, skillData.effect)
+			end
 		end
 	end
 
