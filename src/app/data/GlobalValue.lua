@@ -3,14 +3,16 @@
 -- Date: 2015-12-03 14:04:48
 -- 游戏中使用的全局变量
 
+
 -- 颜色类型
 enStoneType = {
-    "Red", -- 红色珠子
-    "Yellow", -- 黄色珠子
-    "Blue", -- 蓝色珠子
-    "Green", -- 绿色珠子
-    "Purple", -- 紫色珠子
-    "Multicolor", -- 彩色
+    "Red", -- 1, 红色珠子
+    "Yellow", -- 2, 黄色珠子
+    "Blue", -- 3, 蓝色珠子
+    "Green", -- 4, 绿色珠子
+    "Purple", -- 5, 紫色珠子
+    "Multicolor", -- 6, 彩色
+    "Empty", -- 7, 空格
     "Max"
 }
 enStoneType = EnumTable(enStoneType, 0)
@@ -41,3 +43,5 @@ Direction4ValueArr = {
     {1, 0}, -- 右
     {0, -1}, -- 下
 }
+
+

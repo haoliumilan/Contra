@@ -32,6 +32,7 @@ PlayDirector.LEVEL_SUCCESS_EVENT = "LEVEL_SUCCESS_EVENT"
 PlayDirector.LEVEL_FAIL_EVENT = "LEVEL_FAIL_EVENT"
 PlayDirector.TIPS_EVENT = "TIPS_EVENT"
 
+
 function PlayDirector:ctor(levelData)
 	self.levelData_ = levelData
 
@@ -42,6 +43,8 @@ function PlayDirector:ctor(levelData)
 	self.newSkills_ = {} -- 每次消除新产生的技能
 	self.finalNewSkill_ = nil -- 新产生的技能中，最后一个，用于判断时间节点
 
+	self.touchStone_ = nil -- 当前点击的stone
+	self.clearIndex_ = 0 -- 消除的stone的序数，用于计算时间间隔
 	self.selectStones_ = {} -- 选中的stoneView
 	self.selectSkill_ = nil -- 选中的技能
 	self.curSkillStone_ = nil -- 使用技能时，当前技能选中的stone
@@ -56,13 +59,6 @@ function PlayDirector:ctor(levelData)
 	self.stepCount_ = 0 -- 使用的回合数
 	self.clearStones_ = {} -- 消除的各种stone的数量, 用于统计
 	self.usedSkills_ = {} -- 使用的技能数量，用于统计
-
-	self.coverLayer_ = display.newColorLayer(cc.c4b(0, 0, 0, 200))
-		:addTo(self, 1)
-		:pos(21, 28)
-		:size(display.width-50, display.width-50)
-	self.coverLayer_:setVisible(false)
-	self.coverLayer_:setTouchSwallowEnabled(false)
 
 	-- 掉落stone类型容器
 	self.dropStoneArr_ = {}
@@ -171,14 +167,14 @@ function PlayDirector:onStart_(event)
 				end
 
 				if coverType > 0 then
-					posX, posY = self:getStonePosByIndex_(i, j)
+					posX, posY = self:getStonePosByIndex(i, j)
 					self.coverViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = coverType})
 						:addTo(self, 2)
 						:pos(posX, posY)
 				end
 
 				if stoneType > 0 then
-					posX, posY = self:getStonePosByIndex_(i, j)
+					posX, posY = self:getStonePosByIndex(i, j)
 					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = stoneType,
 						skillId = oneSkillId})
 						:addTo(self)
@@ -194,7 +190,6 @@ end
 function PlayDirector:onSelectStone_(event)
 	-- 选中一个StoneView, 相邻的相同颜色的stone自动选中，其他的变成不可选中状态
 	local selectStone = event.args[1]
-	self.coverLayer_:setVisible(true)
 
 	self.selectStones_ = self:getCanLinkStones_(selectStone)
 
@@ -206,19 +201,19 @@ function PlayDirector:onSelectStone_(event)
 		end
 	end
 
-	local oneStone = nil
-	for i=1,PlayDirector.SMaxRow do
-		for j=1,PlayDirector.SMaxCol do
-			oneStone = self.stoneViews_[i][j]
-			if oneStone and oneStone:getStoneState() == enStoneState.Normal then
-				oneStone:setStoneState(enStoneState.Disable)
-			end
-		end
+	if #self.selectStones_ > 1 then
+		-- 消除
+		self:useStepCount_()
+		self.fsm__:doEvent("clearStone")
+	else
+		-- 取消选中
+		self.fsm__:doEvent("resetStone")
 	end
 
 end
 
 function PlayDirector:onClearStone_(event)
+	self.clearIndex_ = 0
 	self.touchLayer_:setTouchEnabled(false)	
 
 	event.args[1] = event.args[1] or {}
@@ -274,7 +269,7 @@ function PlayDirector:onClearStone_(event)
 				end
 
 				clearColors[oneStone:getStoneType()] = clearColors[oneStone:getStoneType()] + 1
-				self:clearOne_(oneStone)
+				self:doClearAction(oneStone)
 			end
 
 		end
@@ -328,7 +323,7 @@ function PlayDirector:onClearStone_(event)
 		delay = 0.5
 	end
 	self:performWithDelay(function()
-		self.fsm__:doEvent("resetStone", {is_clear = true})
+		-- self.fsm__:doEvent("resetStone", {is_clear = true})
 		end, delay)
 end
 
@@ -339,7 +334,6 @@ function PlayDirector:onResetStone_(event)
 
 	self.selectSkill_ = nil
 
-	self.coverLayer_:setVisible(false)
 	-- 重置所有stone
 	self.selectStones_ = {}
 
@@ -417,7 +411,7 @@ function PlayDirector:updateMatrix3_()
 				self.stoneViews_[rowIndex][colIndex] = nil
 				
 				oneStone:stop()
-				local pos1X, pos1Y = self:getStonePosByIndex_(newRowIndex, newColIndex)
+				local pos1X, pos1Y = self:getStonePosByIndex(newRowIndex, newColIndex)
 				oneStone:moveTo(PlayDirector.TimeDrop, pos1X, pos1Y)
 				isRunAction = true
 
@@ -429,8 +423,8 @@ function PlayDirector:updateMatrix3_()
 	-- 创建新的stone,在第8行
 	local function addNewStone(colIndex)
 		-- 最上面一行了，创建新的吧
-		local pos1X, pos1Y = self:getStonePosByIndex_(7, colIndex)
-		local pos2X, pos2Y = self:getStonePosByIndex_(8, colIndex)					
+		local pos1X, pos1Y = self:getStonePosByIndex(7, colIndex)
+		local pos2X, pos2Y = self:getStonePosByIndex(8, colIndex)					
 		local oneStone = app:createView("StoneView", {rowIndex = 7, colIndex = colIndex, stoneType = self:getRandomStoneColor_()})
 			:addTo(self)
 			:pos(pos2X, pos2Y)					
@@ -481,9 +475,9 @@ function PlayDirector:updateMatrix_()
 			if self.coverViews_[i][j] == nil and oneStone == nil then
 			-- 去找它上面的，离他最近的那个stone
 				tempIndex = 0
-				pos1X, pos1Y = self:getStonePosByIndex_(i, j)
+				pos1X, pos1Y = self:getStonePosByIndex(i, j)
 
-				while oneStone == nil do
+				while oneStone == nil or oneStone:getStoneType() == enStoneType.Empty do
 					if i + tempIndex == PlayDirector.SMaxRow then
 						break
 					else
@@ -498,7 +492,7 @@ function PlayDirector:updateMatrix_()
 					addStoneArr[j] = addStoneArr[j] + 1
 					tempIndex = tempIndex+addStoneArr[j]
 
-					pos2X, pos2Y = self:getStonePosByIndex_(PlayDirector.SMaxRow+addStoneArr[j], j)
+					pos2X, pos2Y = self:getStonePosByIndex(PlayDirector.SMaxRow+addStoneArr[j], j)
 					
 					self.stoneViews_[i][j] = app:createView("StoneView", {rowIndex = i, colIndex = j, stoneType = self:getRandomStoneColor_()})
 						:addTo(self)
@@ -538,11 +532,11 @@ function PlayDirector:onTouch_(event)
 
     local oneStone = self:getStoneByPos_(event.x, event.y)
     local state = self.fsm__:getState()
-    if oneStone then
-    	self:dispatchEvent({name = PlayDirector.TIPS_EVENT})
-    end
 
     if oneStone then
+    	self.touchStone_ = oneStone
+    	self:dispatchEvent({name = PlayDirector.TIPS_EVENT})
+
     	-- 选中了stone
     	local stoneState = oneStone:getStoneState()
     	if state == "normal" then
@@ -753,7 +747,7 @@ function PlayDirector:getCanLinkStones_(startStone, isCheckStoneType)
 end
 
 -- 获取矩阵的一个珠子的坐标
-function PlayDirector:getStonePosByIndex_(rowIndex, colIndex)
+function PlayDirector:getStonePosByIndex(rowIndex, colIndex)
 	local posX = PlayDirector.SOriPosX + PlayDirector.SSpace * colIndex + PlayDirector.SSide * (colIndex - 0.5)
 	local posY = PlayDirector.SOriPosY + PlayDirector.SSpace * rowIndex + PlayDirector.SSide * (rowIndex - 0.5)
 	return posX, posY
@@ -778,27 +772,27 @@ end
 
 -- 新的一回合
 function PlayDirector:newStep_()
-	-- 判断是否生成技能
-	local noSkill = true
-	for i=1,5 do
-		if self.newSkills_[i] and self.newSkills_[i] > 0 then
-			noSkill = false
-			break
-		end
-	end
+	-- -- 判断是否生成技能
+	-- local noSkill = true
+	-- for i=1,5 do
+	-- 	if self.newSkills_[i] and self.newSkills_[i] > 0 then
+	-- 		noSkill = false
+	-- 		break
+	-- 	end
+	-- end
 
-	if noSkill == false then
-		self:createSkill_()
-		return
-	end
+	-- if noSkill == false then
+	-- 	self:createSkill_()
+	-- 	return
+	-- end
 
-	-- 判断是否合成技能
-	if self:composeSkill_() then
-		self:performWithDelay(function()
-			self:updateMatrix_()
-		end, PlayDirector.TimeComposeSkill+0.2)
-		return
-	end
+	-- -- 判断是否合成技能
+	-- if self:composeSkill_() then
+	-- 	self:performWithDelay(function()
+	-- 		self:updateMatrix_()
+	-- 	end, PlayDirector.TimeComposeSkill+0.2)
+	-- 	return
+	-- end
 
 	-- 关卡结束了
 	if self:checkResult_() == true then
@@ -942,7 +936,7 @@ function PlayDirector:updateActiveStonePos_()
 	local newRowIndex, newColIndex, newPosX, newPosY
 	for i,v in ipairs(allActiveStones) do
 		newRowIndex, newColIndex = v:getRowColIndex()
-		newPosX, newPosY = self:getStonePosByIndex_(newRowIndex, newColIndex)
+		newPosX, newPosY = self:getStonePosByIndex(newRowIndex, newColIndex)
 		v:stop()
 		v:moveTo(PlayDirector.TimeUpdatePos, newPosX, newPosY)
 	end
@@ -966,22 +960,6 @@ function PlayDirector:getIsSelectStone_(oneStone)
 	end
 
 	return oneStone:getIsSelected()
-end
-
--- 消除一个stone、cover
-function PlayDirector:clearOne_(oneValue)
-	if oneValue then
-		local table 
-		if oneValue:getStoneType2() == enStoneType2.Stone then
-			table = self.stoneViews_
-		elseif oneValue:getStoneType2() == enStoneType2.Cover then
-			table = self.coverViews_
-		end
-
-		local rowIndex, colIndex = oneValue:getRowColIndex()
-		oneValue:removeFromParent()
-		table[rowIndex][colIndex] = nil
-	end
 end
 
 -- 获取统计数据
@@ -1022,7 +1000,7 @@ function PlayDirector:createSkill_()
 		end
 
 		local rowIndex, colIndex = targetStone:getRowColIndex()
-		local posX, posY = self:getStonePosByIndex_(rowIndex, colIndex)
+		local posX, posY = self:getStonePosByIndex(rowIndex, colIndex)
 		local newStone = app:createView("StoneView", {rowIndex = rowIndex, colIndex = colIndex, stoneType = stoneType, skillId = skillId})
 				:addTo(self)
 				:pos(25*stoneType+120*(stoneType-0.5), 850)
@@ -1102,7 +1080,7 @@ function PlayDirector:oneComposeSkill_(skillStone)
 	end
 
 	if skillIndex then
-		local posX, posY = self:getStonePosByIndex_(rowIndex, colIndex)
+		local posX, posY = self:getStonePosByIndex(rowIndex, colIndex)
 		self:reorderChild(oneStone, 1)
 		self.stoneViews_[rowIndex][colIndex] = nil
 		self.stoneViews_[newRowIndex][newColIndex] = nil
@@ -1124,6 +1102,56 @@ function PlayDirector:oneComposeSkill_(skillStone)
 	end
 end
 
+-- 消除动画
+function PlayDirector:doClearAction(oneStone)
+	self:reorderChild(self.touchStone_, 1) 
+	self.clearIndex_ = self.clearIndex_ + 1
+
+	local targetPosX, targetPosY = self.touchStone_:getPosition()
+	local action = nil
+	if oneStone == self.touchStone_ then
+		action = cca.scaleTo(0.2, 1.2)
+
+	else
+		action = cca.spawn({
+			cca.moveTo(0.2, targetPosX, targetPosY),
+			cca.scaleTo(0.2, 1.2)
+			})
+	end
+
+	local delayTime = self.clearIndex_ * cc.Director:getInstance():getDeltaTime()*2 + 0.1
+	local targetPosX2 = math.random(280, 480)
+	local targetPosY2 = math.random(1100, 1200)
+	oneStone:runAction(transition.sequence({
+		action,
+		cca.delay(delayTime),
+		cca.moveTo(0.2, targetPosX2, targetPosY2),
+		cc.CallFunc:create(function()
+			self:clearOne_(oneStone)			
+		end)
+		}))
+
+end
+
+-- 消除一个stone、cover
+function PlayDirector:clearOne_(oneValue)
+	if oneValue then
+		local table 
+		if oneValue:getStoneType2() == enStoneType2.Stone then
+			table = self.stoneViews_
+		end
+
+		local rowIndex, colIndex = oneValue:getRowColIndex()
+		oneValue:removeFromParent()
+		table[rowIndex][colIndex] = nil
+
+		self.clearIndex_ = self.clearIndex_ - 1
+		if self.clearIndex_ == 0 then
+			-- 都消除了
+			self.fsm__:doEvent("resetStone", {is_clear = true})
+		end
+	end
+end
 
 
 return PlayDirector

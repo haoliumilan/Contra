@@ -19,6 +19,7 @@ end)
 
 PlayLevelScene.ImgBg = "play/bg.jpg"
 PlayLevelScene.ImgPause = "play/pause.png"
+PlayLevelScene.ImgStoneBg = "play/stone_bg_%d.png"
 
 
 function PlayLevelScene:ctor(levelId)
@@ -43,17 +44,31 @@ function PlayLevelScene:ctor(levelId)
         :pos(display.right - 55, display.top - 55)
         :addTo(self, 1)
 
+    -- 
+    self.playDirector_ = PlayDirector.new(self.levelData_)
+        :addTo(self, 1)
+
+    -- 背景地图
+    local stoneCfg = self.levelData_.stone or {}
+    for i=1,PlayDirector.SMaxRow do
+        stoneCfg[i] = stoneCfg[i] or {}
+        for j=1,PlayDirector.SMaxCol do
+            if stoneCfg[i][j] ~= enStoneType.Empty then
+                local bgName = string.format(PlayLevelScene.ImgStoneBg, (i+j)%2+1)
+                local posX, posY = self.playDirector_:getStonePosByIndex(i, j)
+                display.newSprite(bgName, posX, posY)
+                    :addTo(self)
+            end
+        end
+    end
+
     -- 提示
-    self.tipsView_ = TipsView.new()
-        :addTo(self)
+    -- self.tipsView_ = TipsView.new()
+        -- :addTo(self)
 
     --
     self.picView_ = app:createView("PicView", {picId = self.levelData_.picture})
         :addTo(self)
-
-    -- 
-    self.playDirector_ = PlayDirector.new(self.levelData_)
-	    :addTo(self)
 
     cc.EventProxy.new(self.playDirector_, self)
         :addEventListener(self.playDirector_.CHANGE_STEP_EVENT, handler(self, self.playDirectorCb_))
@@ -176,7 +191,7 @@ function PlayLevelScene:levelPauseCb_(tag)
 end
 
 function PlayLevelScene:showTips(tips)
-    self.tipsView_:showTips(tips)
+    -- self.tipsView_:showTips(tips)
 end
 
 function PlayLevelScene:playDirectorCb_(event)

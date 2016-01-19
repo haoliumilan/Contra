@@ -142,7 +142,7 @@ function StoneView:updateSprite_()
     if self.curHitCount_ < self.stoneCfg_.hit_count then
         texFile = string.format(ImageName.StoneNorml2, self.stoneType_, (self.stoneCfg_.hit_count+1-self.curHitCount_))
     else
-        texFile = string.format(ImageName.StoneNorml, self.stoneType_)
+        texFile = string.format(ImageName.StoneNorml, self.stoneType_, self.stoneType_)
     end
 
     if not texFile then return end
@@ -157,23 +157,6 @@ function StoneView:updateSprite_()
         display.newSprite(texFile, size.width*0.5, size.height*0.5)
             :addTo(self.sprite_)
             :rotation(angle)
-    end
-
-    -- 闪烁
-    if self.stoneState_ == enStoneState.Highlight 
-        or (self.isSkillEffect_ == true and self.stoneState_ == enStoneState.Disable) then
-        local value = 100
-        if self.isSkillEffect_ == true and self.stoneState_ == enStoneState.Disable then
-            value = 0
-        end
-        local sequence = transition.sequence({
-                cc.FadeTo:create(0.8, value),
-                cc.FadeTo:create(0.8, 255),
-            })
-        self.sprite_:runAction(cc.RepeatForever:create(sequence))
-    else
-        self.sprite_:setOpacity(255)
-        self.sprite_:stopAllActions()        
     end
 
 end

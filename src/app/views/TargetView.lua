@@ -15,7 +15,7 @@ function TargetView:ctor(property)
 
 	if self.type_ == 1 then
 		for i,v in ipairs(self.data_) do
-			local iconName = string.format(ImageName.StoneNorml, v[1])
+			local iconName = string.format(ImageName.StoneNorml, v[1], v[1])
 			local iconSp = display.newSprite(iconName, 30, display.top-35-50*i)
 				:addTo(self)
 				:scale(0.4)
@@ -27,7 +27,7 @@ function TargetView:ctor(property)
 		end
 	elseif self.type_ == 2 then
 		for i,v in ipairs(self.data_) do
-			local iconName = string.format(ImageName.StoneNorml, v[1])
+			local iconName = string.format(ImageName.StoneNorml, v[1], v[1])
 			display.newSprite(iconName, -180+(i-1)%3*150, -70*math.floor((i-1)/3))
 				:addTo(self)
 				:scale(0.5)

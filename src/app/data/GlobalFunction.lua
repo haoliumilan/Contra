@@ -12,3 +12,4 @@ function EnumTable(tbl, index)
     end
     return enumTable
 end
+

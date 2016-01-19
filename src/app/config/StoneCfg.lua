@@ -39,6 +39,10 @@ configArr[6] = { -- 彩色
 	is_selected = true, is_splash = false, hit_count = 1, type2 = enStoneType2.Stone,
 }
 
+configArr[7] = { -- 空格
+	is_selected = false, is_splash = false, hit_count = 1, type2 = enStoneType2.Stone,
+}
+
 
 function StoneCfg.get(stoneId)
     assert(stoneId >= 1 and stoneId <= #configArr, string.format("StoneCfg.get() - invalid stoneId %s", tostring(stoneId)))

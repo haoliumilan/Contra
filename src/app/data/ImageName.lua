@@ -14,7 +14,7 @@ ImageName = {
 	BottomBg = "global/bottom.png",
 
 	-- stone
-	StoneNorml = "stone/stone_n_%d.png",
+	StoneNorml = "stone/stone_%d_%d.png",
 	StoneNorml2 = "stone/stone_n_%d_%d.png",
 	StoneHightlight = "stone/stone_h_%d.png",
 
